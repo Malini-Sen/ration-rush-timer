@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Ration Rush"
+version = "1.0.0"
+id = "artifacts/ration-rush"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24875
+
+[services.development]
+run = "pnpm --filter @workspace/ration-rush run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/ration-rush", "run", "build" ]
+publicDir = "artifacts/ration-rush/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24875"
+BASE_PATH = "/"

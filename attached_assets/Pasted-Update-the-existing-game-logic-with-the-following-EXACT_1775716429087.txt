@@ -1,0 +1,180 @@
+Update the existing game logic with the following EXACT rule changes.
+
+IMPORTANT:
+- Do NOT change UI structure
+- Do NOT rewrite the app
+- ONLY update timing values, event logic, and Sick state
+- Keep everything deterministic
+- Continue using a SINGLE game loop (elapsedTime in seconds)
+- Do NOT use Math.random()
+
+---
+
+GAME TIMER:
+
+- Change total duration to 10 minutes (600 seconds)
+- REMOVE manual submit
+- At 600 seconds:
+  → automatically end game
+  → navigate to results screen
+
+- REMOVE score display from game screen
+- Score only appears on results screen
+
+---
+
+SATIETY SYSTEM:
+
+- Every 40 seconds (elapsedTime % 40 === 0):
+  → decrease satiety of all alive survivors by 10
+
+- At 420 seconds:
+  → decrease satiety of ALL survivors by 15
+  → if satiety < 0, set to 0
+
+- At 510 seconds:
+  → increase Child satiety by 20
+  → if satiety > 100, cap at 100
+
+- Always clamp satiety between 0 and 100
+
+---
+
+CRITICAL + INFECTION TIMINGS:
+
+- If a survivor is in Critical state for 30 seconds:
+  → set status = Infected
+
+- If a survivor is Infected for 45 seconds:
+  → set status = Zombie permanently
+
+---
+
+STARVATION SYSTEM:
+
+- If satiety = 0:
+  → start starvationDuration
+
+- If starvationDuration >= 45 seconds:
+  → set status = Dead permanently
+
+---
+
+SICK STATE (NEW — DETERMINISTIC):
+
+Trigger:
+- When a survivor receives Expired Food
+  → immediately set status = Sick
+
+Duration:
+- Default: 60 seconds
+- After Contamination event (300s): 120 seconds
+
+Track sicknessDuration per survivor.
+
+Effects while Sick:
+- All food gives HALF satiety:
+  - Basic → +5 instead of +10
+  - Protein → +10 instead of +20
+  - Expired → +10 instead of +20
+
+- Survivor CANNOT receive Balanced Diet bonus while Sick
+
+End condition:
+- When sicknessDuration reaches its limit:
+  → remove Sick state automatically
+
+Sick does NOT:
+- spread
+- cause death directly
+- turn into Zombie
+
+---
+
+FOOD SYSTEM NOTE:
+
+- Expired Food ALWAYS causes Sick (no randomness)
+
+---
+
+EVENT SYSTEM (EXACT TIMES):
+
+Trigger ONLY once using:
+elapsedTime === X
+
+---
+
+EVENTS:
+
+60s:
+- Convert 4 Basic → Expired
+
+120s:
+- +3 Protein
+
+165s:
+- Engineer loses 15 satiety
+
+210s:
+- −3 Basic
+
+240s:
+- Elderly becomes Infected immediately
+
+270s:
+- +3 Basic
+
+300s:
+- −2 Protein
+- Activate Contamination:
+  → Sick duration becomes 120 seconds
+
+330s:
+- All Weak survivors → Infected
+
+360s:
+- Worker loses 15 satiety
+
+390s:
+- +2 Basic, +1 Protein
+
+420s:
+- (Handled above — do NOT duplicate)
+
+450s:
+- All Critical survivors:
+  → immediately start starvationDuration
+
+480s:
+- +1 Basic, +1 Protein, +1 Expired
+
+510s:
+- (Handled above — do NOT duplicate)
+
+540s:
+- Final Stretch:
+  → No further food can be added to inventory
+
+---
+
+FINAL STATE:
+
+At 600 seconds:
+- Stop game loop
+- Lock all interactions
+- Navigate to results screen
+- Compute final score
+
+---
+
+IMPORTANT IMPLEMENTATION NOTES:
+
+- Ensure each event triggers ONLY ONCE
+  → use flags or triggeredEvents set
+
+- All timers (criticalDuration, infectionDuration, starvationDuration, sicknessDuration)
+  must update every second
+
+- Do NOT use randomness anywhere
+
+- Do NOT modify UI structure or layout

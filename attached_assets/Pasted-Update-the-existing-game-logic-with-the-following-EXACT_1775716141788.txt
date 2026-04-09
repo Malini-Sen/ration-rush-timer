@@ -1,0 +1,131 @@
+Update the existing game logic with the following EXACT rule changes.
+
+IMPORTANT:
+- Do NOT change UI structure
+- Do NOT rewrite the app
+- ONLY update timing values and event logic
+- Keep everything deterministic
+- Continue using the existing single game loop (elapsedTime in seconds)
+
+---
+
+GAME TIMER:
+
+- Change total duration from 15 minutes (900s) → 10 minutes (600s)
+- REMOVE manual submit option
+- At 600 seconds:
+  → automatically end game
+  → navigate to results screen
+
+- REMOVE score display from the main game screen
+- Score should ONLY appear on results page
+
+---
+
+SATIETY SYSTEM:
+
+- Every 40 seconds (elapsedTime % 40 === 0):
+  → decrease satiety of all alive survivors by 10
+
+- At 420 seconds:
+  → decrease satiety of ALL survivors by 15
+  → if satiety < 0, set it to 0
+
+- At 510 seconds:
+  → increase Child satiety by 20
+  → if satiety > 100, cap at 100
+
+---
+
+CRITICAL + INFECTION TIMINGS:
+
+- If a survivor is in Critical state for 30 seconds:
+  → set status = Infected
+
+- If a survivor is Infected for 45 seconds:
+  → set status = Zombie permanently
+
+---
+
+STARVATION SYSTEM:
+
+- If satiety = 0:
+  → start starvationDuration
+
+- If starvationDuration >= 45 seconds:
+  → set status = Dead permanently
+
+---
+
+EVENT SYSTEM (USE EXACT TIMES):
+
+Trigger these EXACT events based on elapsedTime:
+
+60s:
+- Convert 4 Basic → Expired
+
+120s:
+- +3 Protein
+
+165s:
+- Engineer loses 15 satiety
+
+210s:
+- −3 Basic
+
+240s:
+- Elderly becomes Infected immediately
+
+270s:
+- +3 Basic
+
+300s:
+- −2 Protein
+
+330s:
+- All Weak survivors → Infected
+
+360s:
+- Worker loses 15 satiety
+
+390s:
+- +2 Basic, +1 Protein
+
+420s:
+- Global satiety drop handled above (do NOT duplicate)
+
+450s:
+- All Critical survivors:
+  → immediately start starvationDuration timer
+
+480s:
+- +1 Basic, +1 Protein, +1 Expired
+
+510s:
+- Child satiety boost handled above (do NOT duplicate)
+
+540s:
+- “Final Stretch” state:
+  → No further food can be added to inventory
+
+---
+
+FINAL STATE:
+
+At 600 seconds:
+- Stop game loop
+- Lock all interactions
+- Navigate to results screen
+- Compute final score
+
+---
+
+IMPORTANT IMPLEMENTATION NOTES:
+
+- Ensure events trigger ONLY ONCE at exact timestamps
+- Use conditions like:
+  elapsedTime === X
+
+- Do NOT use randomness
+- Ensure satiety is always clamped between 0 and 100
+- Do NOT break existing state structure
