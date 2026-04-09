@@ -120,7 +120,7 @@ const GAME_EVENTS: GameEvent[] = [
   },
   {
     time: 240,
-    message: "Elderly shows signs of infection — immediately Infected.",
+    message: "Elder shows signs of infection — immediately Infected.",
     logType: "danger",
     applySurvivors: (ss) =>
       ss.map((s) =>
@@ -233,7 +233,7 @@ const INITIAL_SURVIVORS: Survivor[] = [
   { id: "medic",    name: "Medic",    role: "Medic",    satiety: 100, dead: false, starvationDuration: 0, sicknessDuration: 0, criticalDuration: 0, infectionDuration: 0, infected: false, zombie: false, isolated: false, fedBasic: false, fedProtein: false, fedExpired: false },
   { id: "worker",   name: "Worker",   role: "Worker",   satiety: 100, dead: false, starvationDuration: 0, sicknessDuration: 0, criticalDuration: 0, infectionDuration: 0, infected: false, zombie: false, isolated: false, fedBasic: false, fedProtein: false, fedExpired: false },
   { id: "child",    name: "Child",    role: "Child",    satiety: 100, dead: false, starvationDuration: 0, sicknessDuration: 0, criticalDuration: 0, infectionDuration: 0, infected: false, zombie: false, isolated: false, fedBasic: false, fedProtein: false, fedExpired: false },
-  { id: "elderly",  name: "Elderly",  role: "Elderly",  satiety: 100, dead: false, starvationDuration: 0, sicknessDuration: 0, criticalDuration: 0, infectionDuration: 0, infected: false, zombie: false, isolated: false, fedBasic: false, fedProtein: false, fedExpired: false },
+  { id: "elderly",  name: "Elder",    role: "Elder",    satiety: 100, dead: false, starvationDuration: 0, sicknessDuration: 0, criticalDuration: 0, infectionDuration: 0, infected: false, zombie: false, isolated: false, fedBasic: false, fedProtein: false, fedExpired: false },
 ];
 
 const INITIAL_INVENTORY: Record<FoodType, FoodItem> = {
@@ -716,16 +716,68 @@ function ChoiceModal({ choice }: { choice: PendingChoice }) {
   );
 }
 
-function IntroScreen({ onStart }: { onStart: () => void }) {
+function RulesCard() {
+  const rules = [
+    { text: "Keep satiety above 0" },
+    { text: `Critical (${CRITICAL_TO_INFECTED}s) → Infected` },
+    { text: `Infected (${INFECTED_TO_ZOMBIE}s) → Zombie` },
+    { text: `Starvation (${STARVATION_TO_DEAD}s) → Dead` },
+    { text: "Expired food → Sick (half effect)" },
+  ];
+
   return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-background">
-      <h1 className="text-6xl font-bold tracking-tight text-accent mb-12">RATION RUSH</h1>
-      <button
-        onClick={onStart}
-        className="px-8 py-4 text-xl font-semibold rounded-lg bg-primary text-primary-foreground cursor-pointer transition-opacity hover:opacity-90"
-      >
-        BEGIN SIMULATION
-      </button>
+    <div className="rounded-xl border border-zinc-700/60 p-4 bg-zinc-900/40 flex flex-col gap-3">
+      <p className="font-bold text-xs uppercase tracking-widest text-muted-foreground">Rules</p>
+      <ul className="flex flex-col gap-2">
+        {rules.map((r) => (
+          <li key={r.text} className="flex items-start gap-2 text-xs text-zinc-400 leading-snug">
+            <span className="shrink-0 mt-[5px] w-1 h-1 rounded-full bg-zinc-600" />
+            {r.text}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function IntroScreen({ onStart }: { onStart: () => void }) {
+  const rules = [
+    "Allocate food to keep survivors alive",
+    "Satiety decreases over time",
+    "Critical survivors can become Infected",
+    "Infected survivors can turn into Zombies",
+    "Expired food causes Sick (reduces food effectiveness)",
+    "Events will impact resources and survivors",
+    "Keep your team alive until extraction arrives",
+  ];
+
+  return (
+    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-background px-4 py-12">
+      <div className="w-full max-w-lg flex flex-col items-center gap-8">
+        <div className="text-center">
+          <h1 className="text-6xl font-bold tracking-tight text-accent mb-3">RATION RUSH</h1>
+          <p className="text-base text-muted-foreground">A survival resource management simulation</p>
+        </div>
+
+        <div className="w-full rounded-xl border border-zinc-700 bg-card px-6 py-5">
+          <p className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-4">Game Rules</p>
+          <ul className="flex flex-col gap-2.5 list-none">
+            {rules.map((rule) => (
+              <li key={rule} className="flex items-start gap-3 text-sm text-foreground/90">
+                <span className="shrink-0 mt-[6px] w-1.5 h-1.5 rounded-full bg-accent/70" />
+                {rule}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <button
+          onClick={onStart}
+          className="px-8 py-4 text-xl font-semibold rounded-lg bg-primary text-primary-foreground cursor-pointer transition-opacity hover:opacity-90"
+        >
+          BEGIN SIMULATION
+        </button>
+      </div>
     </div>
   );
 }
@@ -953,6 +1005,7 @@ function GameScreen() {
           {survivors.map((s) => (
             <SurvivorCard key={s.id} survivor={s} inventory={inventory} onFeed={feedSurvivor} onIsolate={isolateSurvivor} onMedicTreat={medicTreat} foodLocked={foodLocked} medicUsed={medicUsed} />
           ))}
+          <RulesCard />
         </div>
       </div>
     </div>
