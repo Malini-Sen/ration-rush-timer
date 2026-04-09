@@ -1,0 +1,161 @@
+Update the game with the following scoring system, bug fixes, and mechanics.
+
+IMPORTANT:
+- Do NOT use randomness
+- Keep everything deterministic
+- Do NOT rewrite the app
+- Only update logic and scoring
+
+---
+
+EARLY TERMINATION:
+
+- If ALL survivors are either Dead or Zombie:
+  → immediately end game
+  → go to results screen
+
+---
+
+BUG FIXES:
+
+1. Infection timer issue:
+- Ensure infectionDuration increases EVERY second for infected survivors
+- It must NOT pause
+- If infectionDuration >= 45 seconds:
+  → convert to Zombie
+
+2. Special event popups not triggering:
+- Ensure decision events trigger at EXACT timestamps
+- Use elapsedTime === X
+- Ensure popup renders and blocks interaction until choice is made
+
+---
+
+DECISION EVENTS (ENSURE THEY TRIGGER):
+
+At 360s:
+- “Feed an outsider?”
+  YES → −2 Basic, +8 score
+  NO → no change
+
+At 420s:
+- “Steal from another group?”
+  YES → +3 Basic, −5 score
+  NO → no change
+
+---
+
+SCORING SYSTEM:
+
+Score is calculated ONLY at end.
+
+---
+
+BASE SURVIVAL:
+
+- Alive survivor → +6 points
+- Dead survivor → −8 points
+- Zombie → −5 points
+
+---
+
+SATIETY SCORE (NEW):
+
+Reward efficiency, not overfeeding:
+
+For each ALIVE survivor:
+
+- satiety 70–100 → +2
+- satiety 40–69 → +1
+- satiety 1–39 → 0
+
+👉 Encourages stable, not excessive allocation
+
+---
+
+INFECTION MANAGEMENT (NEW):
+
+- For each survivor that was Infected but cured:
+  → +2 points
+
+- For each survivor that became Zombie:
+  → already penalized (−5)
+
+---
+
+SICKNESS MANAGEMENT (NEW):
+
+- If a survivor is Sick at end:
+  → −2 points
+
+- If a survivor recovered from Sick:
+  → +1 point
+
+---
+
+RESOURCE EFFICIENCY:
+
+- +1 point per Protein used (reduced from earlier to balance)
+
+---
+
+BALANCED DIET:
+
+- +1 per survivor with ≥2 food types
+- Does NOT apply if they were Sick during feeding
+
+---
+
+DECISION EFFECTS:
+
+Apply:
+- Outsider → +8 or 0
+- Steal → −5 or 0
+
+---
+
+RAW SCORE CALCULATION:
+
+Compute total raw score using all above rules.
+
+---
+
+NORMALIZATION (IMPORTANT):
+
+Convert raw score to range −20 to +20:
+
+Use:
+
+finalScore = round(
+  ((rawScore - minPossible) / (maxPossible - minPossible)) * 40 - 20
+)
+
+---
+
+Define:
+
+- minPossible = −60
+- maxPossible = +60
+
+Clamp finalScore between −20 and +20.
+
+---
+
+DISPLAY:
+
+On results screen show:
+
+- Final Score (−20 to +20)
+- Category:
+  ≥10 → “STABLE SURVIVAL”
+  0 to 9 → “BARELY MADE IT”
+  <0 → “COLLAPSE”
+
+---
+
+IMPORTANT IMPLEMENTATION NOTES:
+
+- All timers (infection, sickness, starvation) must update every second
+- Ensure events trigger ONLY once (use flags)
+- Do NOT use randomness anywhere
+- Keep scoring deterministic and consistent
