@@ -313,25 +313,25 @@ function tickSurvivor(s: Survivor, isDrainTick: boolean, drainRate: number): Sur
 // ─── style helpers ───────────────────────────────────────────────────────────
 
 function cardBorderClass(s: Survivor): string {
-  if (s.zombie)               return "border-purple-700";
-  if (s.dead)                 return "border-zinc-700 opacity-50";
-  if (isStarving(s))          return "border-rose-700";
+  if (s.zombie)                 return "border-red-900";
+  if (s.dead)                   return "border-zinc-700 opacity-50";
+  if (isStarving(s))            return "border-red-600";
   if (s.isolated && s.infected) return "border-cyan-700";
-  if (s.infected)             return "border-red-700";
+  if (s.infected)               return "border-red-600";
   const status = getSatietyStatus(s.satiety);
-  if (status === "Critical")  return "border-orange-700";
-  if (status === "Weak")      return "border-yellow-800";
-  return "border-zinc-700";
+  if (status === "Critical")    return "border-red-600 critical-pulse";
+  if (status === "Weak")        return "border-yellow-600";
+  return "border-green-800";
 }
 
 function satietyBarClass(s: Survivor): string {
   if (s.dead || s.zombie) return "bg-zinc-600";
-  if (isStarving(s))      return "bg-rose-700 animate-pulse";
+  if (isStarving(s))      return "bg-red-600";
   if (s.infected)         return "bg-red-600";
   const st = getSatietyStatus(s.satiety);
-  if (st === "Critical")  return "bg-orange-500";
+  if (st === "Critical")  return "bg-red-500";
   if (st === "Weak")      return "bg-yellow-500";
-  return "bg-emerald-500";
+  return "bg-green-500";
 }
 
 function foodButtonStyle(type: FoodType, disabled: boolean): string {
@@ -362,24 +362,32 @@ function SurvivorCard({ survivor: s, inventory, onFeed, onIsolate, onMedicTreat,
   const satStatus = getSatietyStatus(s.satiety);
 
   const mainBadge = s.zombie
-    ? { label: "Zombie",   cls: "bg-purple-900/50 text-purple-300 border-purple-700" }
+    ? { label: "Zombie",   cls: "bg-red-950/70 text-red-400 border-red-900" }
     : s.dead
       ? { label: "Dead",     cls: "bg-zinc-800/60 text-zinc-500 border-zinc-700" }
       : starving
-        ? { label: "Starving", cls: "bg-rose-900/50 text-rose-300 border-rose-700 animate-pulse" }
+        ? { label: "Starving", cls: "bg-red-900/50 text-red-300 border-red-700 animate-pulse" }
         : s.infected
           ? { label: "Infected", cls: "bg-red-900/50 text-red-300 border-red-700" }
           : satStatus === "Critical"
-            ? { label: "Critical", cls: "bg-orange-900/40 text-orange-300 border-orange-700" }
+            ? { label: "Critical", cls: "bg-red-900/40 text-red-300 border-red-700" }
             : satStatus === "Weak"
               ? { label: "Weak",     cls: "bg-yellow-900/40 text-yellow-300 border-yellow-700" }
-              : { label: "Stable",   cls: "bg-emerald-900/40 text-emerald-300 border-emerald-700" };
+              : { label: "Stable",   cls: "bg-green-900/40 text-green-300 border-green-800" };
 
-  const nameColor = s.dead || s.zombie ? "text-zinc-500" : starving ? "text-rose-400" : "text-foreground";
+  const nameColor = s.dead || s.zombie ? "text-zinc-500" : starving ? "text-red-400" : "text-foreground";
   const foods: FoodType[] = ["basic", "protein", "expired"];
 
+  const zombieBg   = s.zombie ? "bg-red-950/25" : "";
+  const infectedGlow: React.CSSProperties = s.infected && !s.dead && !s.zombie
+    ? { boxShadow: "0 0 14px 2px rgba(220, 38, 38, 0.3)" }
+    : {};
+
   return (
-    <div className={`rounded-xl border p-4 bg-card flex flex-col gap-3 transition-all ${cardBorderClass(s)}`}>
+    <div
+      className={`rounded-xl border p-4 bg-card flex flex-col gap-3 transition-all shadow-md ${cardBorderClass(s)} ${zombieBg}`}
+      style={infectedGlow}
+    >
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0">
           <p className={`font-bold text-lg leading-tight truncate ${nameColor}`}>{s.name}</p>
@@ -407,11 +415,11 @@ function SurvivorCard({ survivor: s, inventory, onFeed, onIsolate, onMedicTreat,
           <span className="text-muted-foreground">Satiety</span>
           <span className={`font-mono font-semibold ${
             s.dead || s.zombie         ? "text-zinc-500"
-            : starving                 ? "text-rose-400"
+            : starving                 ? "text-red-400"
             : s.infected               ? "text-red-400"
-            : satStatus === "Critical" ? "text-orange-400"
+            : satStatus === "Critical" ? "text-red-400"
             : satStatus === "Weak"     ? "text-yellow-400"
-            : "text-emerald-400"
+            : "text-green-400"
           }`}>{s.satiety}</span>
         </div>
         <div className="h-2 rounded-full bg-zinc-800 overflow-hidden">
@@ -425,7 +433,7 @@ function SurvivorCard({ survivor: s, inventory, onFeed, onIsolate, onMedicTreat,
       {!s.dead && !s.zombie && (
         <div className="flex flex-col gap-0.5 text-xs text-muted-foreground">
           {starving && (
-            <span className="tabular-nums text-rose-400 font-semibold">
+            <span className="tabular-nums text-red-400 font-semibold">
               Dies in {STARVATION_TO_DEAD - s.starvationDuration}s — feed now!
             </span>
           )}
@@ -441,7 +449,7 @@ function SurvivorCard({ survivor: s, inventory, onFeed, onIsolate, onMedicTreat,
           )}
           {!s.infected && satStatus === "Critical" && s.criticalDuration > 0 && !starving && (
             <span className="tabular-nums">
-              Infects in <span className="text-orange-400 font-mono font-semibold">{CRITICAL_TO_INFECTED - s.criticalDuration}s</span>
+              Infects in <span className="text-red-400 font-mono font-semibold">{CRITICAL_TO_INFECTED - s.criticalDuration}s</span>
             </span>
           )}
         </div>
@@ -490,7 +498,7 @@ function SurvivorCard({ survivor: s, inventory, onFeed, onIsolate, onMedicTreat,
           {(s.sicknessDuration > 0 || s.infected) && !medicUsed && (
             <button
               onClick={() => onMedicTreat(s.id)}
-              className="flex-1 text-xs font-semibold rounded-lg border px-2 py-1.5 border-emerald-700 text-emerald-300 bg-emerald-950/30 hover:bg-emerald-950/60 cursor-pointer transition-all"
+              className="flex-1 text-xs font-semibold rounded-lg border px-2 py-1.5 border-green-700 text-green-300 bg-green-950/30 hover:bg-green-950/60 cursor-pointer transition-all"
             >
               Medic Treat
               <span className="ml-1 opacity-60 font-normal">1×</span>
@@ -516,7 +524,7 @@ function InventoryPanel({ inventory, sickDuration, drainRate, foodLocked }: {
   };
 
   return (
-    <div className={`w-full rounded-xl border bg-card px-4 py-3 mb-4 ${foodLocked ? "border-rose-700" : "border-zinc-700"}`}>
+    <div className={`w-full rounded-xl border bg-card px-4 py-3 mb-4 ${foodLocked ? "border-red-700" : "border-zinc-700"}`}>
       <div className="flex items-center justify-between mb-3">
         <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">Food Inventory</p>
         <div className="flex gap-2 items-center">
@@ -526,7 +534,7 @@ function InventoryPanel({ inventory, sickDuration, drainRate, foodLocked }: {
             </span>
           )}
           {foodLocked && (
-            <span className="text-xs font-bold text-rose-300 bg-rose-950/50 border border-rose-700 rounded px-2 py-0.5 tracking-wide">
+            <span className="text-xs font-bold text-red-300 bg-red-950/50 border border-red-700 rounded px-2 py-0.5 tracking-wide">
               LOCKED
             </span>
           )}
@@ -541,7 +549,7 @@ function InventoryPanel({ inventory, sickDuration, drainRate, foodLocked }: {
               <span className={`text-sm font-semibold ${empty ? "text-zinc-500" : ""}`}>{item.label}</span>
               <span className="text-xs text-muted-foreground">+{item.satietyGain}</span>
               {type === "expired" && (
-                <span className={`text-xs font-mono tabular-nums ${sickDuration > SICK_DURATION ? "text-rose-400 font-semibold" : "text-muted-foreground"}`}>
+                <span className={`text-xs font-mono tabular-nums ${sickDuration > SICK_DURATION ? "text-red-400 font-semibold" : "text-muted-foreground"}`}>
                   sick:{sickDuration}s
                 </span>
               )}
@@ -558,8 +566,8 @@ function EventLog({ entries }: { entries: LogEntry[] }) {
   if (entries.length === 0) return null;
 
   const colorMap: Record<LogType, string> = {
-    danger:  "text-rose-400 border-rose-900 bg-rose-950/30",
-    good:    "text-emerald-400 border-emerald-900 bg-emerald-950/30",
+    danger:  "text-red-400 border-red-900 bg-red-950/30",
+    good:    "text-green-400 border-green-900 bg-green-950/30",
     neutral: "text-zinc-400 border-zinc-700 bg-zinc-800/30",
   };
 
@@ -596,9 +604,9 @@ interface ResultsData {
 }
 
 function getOutcomeLabel(aliveCount: number): { label: string; cls: string } {
-  if (aliveCount >= 4) return { label: "STABLE SURVIVAL",  cls: "text-emerald-400" };
-  if (aliveCount >= 2) return { label: "PARTIAL SURVIVAL", cls: "text-amber-400"   };
-  return                      { label: "COLLAPSE",          cls: "text-rose-500"    };
+  if (aliveCount >= 4) return { label: "STABLE SURVIVAL",  cls: "text-green-400"  };
+  if (aliveCount >= 2) return { label: "PARTIAL SURVIVAL", cls: "text-yellow-400" };
+  return                      { label: "COLLAPSE",          cls: "text-red-500"   };
 }
 
 function ResultsScreen({ data, onRestart }: { data: ResultsData; onRestart: () => void }) {
@@ -643,7 +651,7 @@ function ResultsScreen({ data, onRestart }: { data: ResultsData; onRestart: () =
                   <span className="text-sm text-foreground">{r.label}</span>
                   <span className="text-xs text-muted-foreground ml-2">{r.detail}</span>
                 </div>
-                <span className={`font-mono font-semibold tabular-nums text-sm ${r.pts > 0 ? "text-emerald-400" : r.pts < 0 ? "text-rose-400" : "text-zinc-500"}`}>
+                <span className={`font-mono font-semibold tabular-nums text-sm ${r.pts > 0 ? "text-green-400" : r.pts < 0 ? "text-red-400" : "text-zinc-500"}`}>
                   {r.pts >= 0 ? "+" : ""}{r.pts}
                 </span>
               </div>
@@ -655,9 +663,9 @@ function ResultsScreen({ data, onRestart }: { data: ResultsData; onRestart: () =
           <p className="text-xs uppercase tracking-widest text-muted-foreground px-4 pt-3 pb-2 font-medium border-b border-zinc-800">Survivor Status</p>
           <div className="divide-y divide-zinc-800">
             {survivors.map((s) => {
-              const tag = s.zombie ? { label: "Zombie", cls: "text-purple-400" }
-                        : s.dead   ? { label: "Dead",   cls: "text-zinc-500"   }
-                        : { label: `Alive · ${s.satiety} satiety`, cls: "text-emerald-400" };
+              const tag = s.zombie ? { label: "Zombie", cls: "text-red-400"   }
+                        : s.dead   ? { label: "Dead",   cls: "text-zinc-500" }
+                        : { label: `Alive · ${s.satiety} satiety`, cls: "text-green-400" };
               const diet = !s.dead && !s.zombie
                 ? [s.fedBasic && "Basic", s.fedProtein && "Protein", s.fedExpired && "Expired"].filter(Boolean).join(", ") || "—"
                 : "—";
@@ -699,7 +707,7 @@ function ChoiceModal({ choice }: { choice: PendingChoice }) {
         <div className="flex flex-col gap-2">
           <button
             onClick={choice.onYes}
-            className="w-full rounded-xl border border-emerald-600 bg-emerald-950/50 text-emerald-300 font-semibold py-3 px-4 text-sm hover:bg-emerald-950/80 cursor-pointer transition-all"
+            className="w-full rounded-xl border border-green-700 bg-green-950/50 text-green-300 font-semibold py-3 px-4 text-sm hover:bg-green-950/80 cursor-pointer transition-all"
           >
             {choice.yesLabel}
           </button>
@@ -994,7 +1002,7 @@ function GameScreen() {
             {" · "}
             <span className="text-foreground font-medium">{aliveCount}</span> alive
             {deadCount > 0 && <> · <span className="text-zinc-400 font-medium">{deadCount} dead</span></>}
-            {zombieCount > 0 && <> · <span className="text-purple-400 font-medium">{zombieCount} zombie{zombieCount > 1 ? "s" : ""}</span></>}
+            {zombieCount > 0 && <> · <span className="text-red-400 font-medium">{zombieCount} zombie{zombieCount > 1 ? "s" : ""}</span></>}
           </p>
         )}
 
