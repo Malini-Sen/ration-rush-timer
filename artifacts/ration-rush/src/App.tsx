@@ -597,6 +597,7 @@ function EventLog({ entries }: { entries: LogEntry[] }) {
 }
 
 interface ResultsData {
+  serverScore: number | null;
   survivors: Survivor[];
   elapsedTime: number;
   proteinUsed: number;
@@ -610,7 +611,7 @@ function getOutcomeLabel(aliveCount: number): { label: string; cls: string } {
 }
 
 function ResultsScreen({ data, onRestart }: { data: ResultsData; onRestart: () => void }) {
-  const { survivors, elapsedTime, proteinUsed, choiceScore } = data;
+  const { survivors, elapsedTime, proteinUsed, choiceScore, serverScore } = data;
   const aliveCount    = survivors.filter((s) => !s.dead && !s.zombie).length;
   const deadCount     = survivors.filter((s) => s.dead).length;
   const zombieCount   = survivors.filter((s) => s.zombie).length;
@@ -622,7 +623,7 @@ function ResultsScreen({ data, onRestart }: { data: ResultsData; onRestart: () =
   const balancedPts = balancedCount * 2;
   const deathPts    = deadCount * -10;
   const zombiePts   = zombieCount * -5;
-  const totalScore  = alivePts + proteinPts + balancedPts + deathPts + zombiePts + choiceScore;
+  const totalScore  = serverScore ?? (alivePts + proteinPts + balancedPts + deathPts + zombiePts + choiceScore);
 
   const rows: { label: string; pts: number; detail: string }[] = [
     { label: "Survivors alive",      pts: alivePts,    detail: `${aliveCount} × +10` },
@@ -808,6 +809,7 @@ function GameScreen() {
   const [pendingChoice, setPendingChoice] = useState<PendingChoice | null>(null);
   const [proteinUsed, setProteinUsed]   = useState(0);
   const [submitted, setSubmitted]       = useState(false);
+  const [serverScore, setServerScore]   = useState<number | null>(null);
   const logIdRef                        = useRef(0);
   const intervalRef                     = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -933,10 +935,27 @@ function GameScreen() {
     );
   }, []);
 
-  const submitGame = useCallback(() => {
+  const submitGame = useCallback(async () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
+    const ss = survivors;
+    const aliveCount   = ss.filter((s) => !s.dead && !s.zombie).length;
+    const deadCount    = ss.filter((s) => s.dead).length;
+    const zombieCount  = ss.filter((s) => s.zombie).length;
+    const balancedCount = ss.filter((s) => !s.dead && !s.zombie && s.fedBasic && s.fedProtein && s.sicknessDuration === 0).length;
+    try {
+      const res = await fetch("/api/score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ aliveCount, deadCount, zombieCount, proteinUsed, balancedCount, choiceScore: score }),
+      });
+      const data = await res.json();
+      setServerScore(data.totalScore);
+    } catch {
+      // fallback to client score if API fails
+      setServerScore(null);
+    }
     setSubmitted(true);
-  }, []);
+  }, [survivors, proteinUsed, score]);
 
   useEffect(() => {
     if (started && !submitted && elapsedTime >= TOTAL_SECONDS) {
@@ -951,7 +970,7 @@ function GameScreen() {
   if (submitted) {
     return (
       <ResultsScreen
-        data={{ survivors, elapsedTime, proteinUsed, choiceScore: score }}
+        data={{ survivors, elapsedTime, proteinUsed, choiceScore: score, serverScore }}
         onRestart={() => window.location.reload()}
       />
     );
