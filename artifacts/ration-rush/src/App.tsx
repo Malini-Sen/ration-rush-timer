@@ -730,6 +730,7 @@ interface ResultsData {
   elapsedTime: number;
   proteinUsed: number;
   decisionScore: number;
+  collapseTime: number | null;
 }
 
 function getOutcomeLabel(finalScore: number): { label: string; cls: string } {
@@ -739,7 +740,7 @@ function getOutcomeLabel(finalScore: number): { label: string; cls: string } {
 }
 
 function ResultsScreen({ data }: { data: ResultsData }) {
-  const { survivors, elapsedTime, proteinUsed, decisionScore } = data;
+  const { survivors, elapsedTime, proteinUsed, decisionScore, collapseTime } = data;
 
   const alive   = survivors.filter((s) => !s.dead && !s.zombie);
   const dead    = survivors.filter((s) => s.dead);
@@ -767,7 +768,24 @@ function ResultsScreen({ data }: { data: ResultsData }) {
   // Resource efficiency: +1 per protein used
   const resourcePts = proteinUsed;
 
-  const rawScore = basePts + satietyPts + infectionPts + sickPts + resourcePts + decisionScore;
+  // End condition bonus/penalty
+  let endConditionPts: number;
+  let endConditionDetail: string;
+  if (collapseTime === null) {
+    endConditionPts = 5;
+    endConditionDetail = "Reached full duration";
+  } else if (collapseTime < 300) {
+    endConditionPts = -10;
+    endConditionDetail = `Collapsed at ${formatTime(collapseTime)} (<5:00)`;
+  } else if (collapseTime < 480) {
+    endConditionPts = -6;
+    endConditionDetail = `Collapsed at ${formatTime(collapseTime)} (5:00–8:00)`;
+  } else {
+    endConditionPts = -3;
+    endConditionDetail = `Collapsed at ${formatTime(collapseTime)} (≥8:00)`;
+  }
+
+  const rawScore = basePts + satietyPts + infectionPts + sickPts + resourcePts + decisionScore + endConditionPts;
 
   // Normalize raw score to −20…+20
   const finalScore = Math.max(-20, Math.min(20, Math.round(((rawScore - (-60)) / 120) * 40 - 20)));
@@ -783,6 +801,7 @@ function ResultsScreen({ data }: { data: ResultsData }) {
     { label: "Sickness",         pts: sickPts,              detail: `sick at end: −2, recovered: +1` },
     { label: "Protein used",     pts: resourcePts,          detail: `${proteinUsed} × +1`    },
     { label: "Decisions",        pts: decisionScore,        detail: "choice events"           },
+    { label: "End condition",    pts: endConditionPts,      detail: endConditionDetail        },
   ];
 
   return (
@@ -994,6 +1013,7 @@ function GameScreen() {
   const [pendingChoice, setPendingChoice] = useState<PendingChoice | null>(null);
   const [proteinUsed, setProteinUsed]   = useState(0);
   const [submitted, setSubmitted]       = useState(false);
+  const [collapseTime, setCollapseTime] = useState<number | null>(null);
   const logIdRef                        = useRef(0);
   const intervalRef                     = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -1142,8 +1162,11 @@ function GameScreen() {
   useEffect(() => {
     if (!started || submitted) return;
     const allGone = survivors.every((s) => s.dead || s.zombie);
-    if (allGone) submitGame();
-  }, [survivors, started, submitted, submitGame]);
+    if (allGone) {
+      setCollapseTime(elapsedTime);
+      submitGame();
+    }
+  }, [survivors, started, submitted, submitGame, elapsedTime]);
 
   const aliveCount  = survivors.filter((s) => !s.dead && !s.zombie).length;
   const zombieCount = survivors.filter((s) => s.zombie).length;
@@ -1152,7 +1175,7 @@ function GameScreen() {
   if (submitted) {
     return (
       <ResultsScreen
-        data={{ survivors, elapsedTime, proteinUsed, decisionScore: score }}
+        data={{ survivors, elapsedTime, proteinUsed, decisionScore: score, collapseTime }}
       />
     );
   }
