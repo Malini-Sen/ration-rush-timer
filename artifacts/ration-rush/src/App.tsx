@@ -700,14 +700,7 @@ function ResultsScreen({ data }: { data: ResultsData }) {
   // Resource efficiency: +1 per protein used
   const resourcePts = proteinUsed;
 
-  // Balanced diet: +1 per alive survivor with ≥2 food types AND not fed while sick
-  const balancedCount = alive.filter((s) => {
-    if (s.fedWhileSick) return false;
-    return [s.fedBasic, s.fedProtein, s.fedExpired].filter(Boolean).length >= 2;
-  }).length;
-  const balancedPts = balancedCount;
-
-  const rawScore = basePts + satietyPts + infectionPts + sickPts + resourcePts + balancedPts + decisionScore;
+  const rawScore = basePts + satietyPts + infectionPts + sickPts + resourcePts + decisionScore;
 
   // Normalize raw score to −20…+20
   const finalScore = Math.max(-20, Math.min(20, Math.round(((rawScore - (-60)) / 120) * 40 - 20)));
@@ -722,7 +715,6 @@ function ResultsScreen({ data }: { data: ResultsData }) {
     { label: "Infection cures",  pts: infectionPts,         detail: `${curedCount} × +2`      },
     { label: "Sickness",         pts: sickPts,              detail: `sick at end: −2, recovered: +1` },
     { label: "Protein used",     pts: resourcePts,          detail: `${proteinUsed} × +1`    },
-    { label: "Balanced diets",   pts: balancedPts,          detail: `${balancedCount} × +1`  },
     { label: "Decisions",        pts: decisionScore,        detail: "choice events"           },
   ];
 
@@ -844,7 +836,6 @@ function RulesCard() {
     { label: "Sick at end",        pts: "−2 each"          },
     { label: "Recovered from sick",pts: "+1 each"          },
     { label: "Protein used",       pts: "+1 each"          },
-    { label: "Balanced diet (≥2 types, not sick)", pts: "+1 each" },
     { label: "Decisions",          pts: "±variable"        },
   ];
 
