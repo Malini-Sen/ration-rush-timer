@@ -388,7 +388,7 @@ function satietyBarClass(s: Survivor): string {
 }
 
 function foodButtonStyle(type: FoodType, disabled: boolean): string {
-  const base = "flex-1 py-1.5 text-xs font-semibold transition-opacity border uppercase tracking-wide";
+  const base = "w-full py-1.5 text-xs font-semibold transition-opacity border uppercase tracking-wide truncate";
   if (disabled) return `${base} opacity-20 cursor-not-allowed border-zinc-800 text-zinc-600 bg-transparent`;
   switch (type) {
     case "basic":   return `${base} border-stone-700 text-stone-400 bg-stone-900/30 hover:bg-stone-800/50 cursor-pointer`;
@@ -508,7 +508,7 @@ function SurvivorCard({ survivor: s, inventory, onFeed, onIsolate, onMedicTreat,
         </div>
       )}
 
-      <div className="flex gap-1.5 pt-0.5">
+      <div className="grid grid-cols-3 gap-1 pt-0.5">
         {foods.map((type) => {
           const item = inventory[type];
           const disabled = blocked || item.count === 0;
@@ -528,7 +528,7 @@ function SurvivorCard({ survivor: s, inventory, onFeed, onIsolate, onMedicTreat,
 
       {!s.dead && !s.zombie &&
         (s.infected && !s.isolated || (s.sicknessDuration > 0 || s.infected) && !medicUsed) && (
-        <div className="flex gap-1.5 flex-wrap border-t border-zinc-900 pt-2.5">
+        <div className="flex flex-col gap-1.5 border-t border-zinc-900 pt-2.5">
           {s.infected && !s.isolated && (
             (() => {
               const canIsolate = inventory.basic.count >= 2;
@@ -536,7 +536,7 @@ function SurvivorCard({ survivor: s, inventory, onFeed, onIsolate, onMedicTreat,
                 <button
                   disabled={!canIsolate}
                   onClick={() => canIsolate && onIsolate(s.id)}
-                  className={`flex-1 text-xs font-semibold border px-2 py-1.5 transition-all uppercase tracking-wide ${
+                  className={`w-full text-xs font-semibold border px-2 py-1.5 transition-all uppercase tracking-wide ${
                     canIsolate
                       ? "border-purple-900 text-purple-400 bg-purple-950/20 hover:bg-purple-950/40 cursor-pointer"
                       : "border-zinc-800 text-zinc-600 opacity-30 cursor-not-allowed"
@@ -551,7 +551,7 @@ function SurvivorCard({ survivor: s, inventory, onFeed, onIsolate, onMedicTreat,
           {(s.sicknessDuration > 0 || s.infected) && !medicUsed && (
             <button
               onClick={() => onMedicTreat(s.id)}
-              className="flex-1 text-xs font-semibold border px-2 py-1.5 border-green-900 text-green-600 bg-green-950/20 hover:bg-green-950/40 cursor-pointer transition-all uppercase tracking-wide"
+              className="w-full text-xs font-semibold border px-2 py-1.5 border-green-900 text-green-600 bg-green-950/20 hover:bg-green-950/40 cursor-pointer transition-all uppercase tracking-wide"
             >
               Medic Treat
               <span className="ml-1 opacity-60 font-normal normal-case">1×</span>
@@ -826,19 +826,6 @@ function RulesCard() {
     { text: "Isolate only delays zombie turn — does not cure" },
   ];
 
-  const scoring = [
-    { label: "Alive",              pts: "+6 each"          },
-    { label: "Dead",               pts: "−10 each"         },
-    { label: "Zombie",             pts: "−6 each"          },
-    { label: "Satiety ≥70 (alive)", pts: "+2 each"         },
-    { label: "Satiety ≥40 (alive)", pts: "+1 each"         },
-    { label: "Infection cured",    pts: "+2 each"          },
-    { label: "Sick at end",        pts: "−2 each"          },
-    { label: "Recovered from sick",pts: "+1 each"          },
-    { label: "Protein used",       pts: "+1 each"          },
-    { label: "Decisions",          pts: "±variable"        },
-  ];
-
   return (
     <div className="border border-stone-800 p-4 bg-card flex flex-col gap-3">
       <p className="font-military text-[10px] uppercase tracking-widest text-muted-foreground">// Field Protocols</p>
@@ -851,15 +838,9 @@ function RulesCard() {
         ))}
       </ul>
       <div className="border-t border-stone-900 pt-2.5">
-        <p className="font-military text-[10px] uppercase tracking-widest text-muted-foreground mb-2">// Scoring (normalized −20…+20)</p>
-        <div className="flex flex-col gap-1">
-          {scoring.map((s) => (
-            <div key={s.label} className="flex items-center justify-between gap-2 text-xs">
-              <span className="text-stone-600 leading-snug">{s.label}</span>
-              <span className="font-mono text-stone-500 shrink-0">{s.pts}</span>
-            </div>
-          ))}
-        </div>
+        <p className="text-xs text-stone-600 leading-relaxed italic">
+          Survive. Stabilize. Manage risk. Choose wisely.
+        </p>
       </div>
     </div>
   );
