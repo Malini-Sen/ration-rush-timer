@@ -147,6 +147,13 @@ const CHOICE_EVENTS: ChoiceEventDef[] = [
 
 const GAME_EVENTS: GameEvent[] = [
   {
+    time: 10,
+    message: "Harsh conditions — all survivors lose 5 satiety.",
+    logType: "danger",
+    applySurvivors: (ss) =>
+      ss.map((s) => (s.dead || s.zombie ? s : { ...s, satiety: Math.max(0, s.satiety - 5) })),
+  },
+  {
     time: 90,
     message: "Medic collapses on patrol — loses 15 satiety.",
     logType: "danger",
@@ -297,14 +304,13 @@ const GAME_EVENTS: GameEvent[] = [
   },
   {
     time: 510,
-    message: "Child found extra rations — +20 satiety.",
+    message: "Scavengers return with supplies — +2 Basic, +1 Protein.",
     logType: "good",
-    applySurvivors: (ss) =>
-      ss.map((s) =>
-        s.id === "child" && !s.dead && !s.zombie
-          ? { ...s, satiety: Math.min(100, s.satiety + 20) }
-          : s
-      ),
+    applyInventory: (inv) => ({
+      ...inv,
+      basic:   { ...inv.basic,   count: inv.basic.count + 2 },
+      protein: { ...inv.protein, count: inv.protein.count + 1 },
+    }),
   },
   {
     time: 540,
@@ -734,8 +740,8 @@ interface ResultsData {
 }
 
 function getOutcomeLabel(finalScore: number): { label: string; cls: string } {
-  if (finalScore >= 10) return { label: "STABLE SURVIVAL", cls: "text-green-700"  };
-  if (finalScore >= 0)  return { label: "BARELY MADE IT",  cls: "text-yellow-700" };
+  if (finalScore >= 60) return { label: "STABLE SURVIVAL", cls: "text-green-700"  };
+  if (finalScore >= 25) return { label: "BARELY MADE IT",  cls: "text-yellow-700" };
   return                       { label: "COLLAPSE",         cls: "text-red-600"   };
 }
 
@@ -747,7 +753,7 @@ function ResultsScreen({ data }: { data: ResultsData }) {
   const zombies = survivors.filter((s) => s.zombie);
 
   // Base survival
-  const basePts = alive.length * 6 + dead.length * -10 + zombies.length * -6;
+  const basePts = alive.length * 10 + dead.length * -10 + zombies.length * -6;
 
   // Satiety score (alive survivors only)
   const satietyPts = alive.reduce((sum, s) => {
@@ -768,32 +774,32 @@ function ResultsScreen({ data }: { data: ResultsData }) {
   // Resource efficiency: +1 per protein used
   const resourcePts = proteinUsed;
 
-  // End condition bonus/penalty
-  let endConditionPts: number;
-  let endConditionDetail: string;
-  if (collapseTime === null) {
-    endConditionPts = 5;
-    endConditionDetail = "Reached full duration";
-  } else if (collapseTime < 300) {
-    endConditionPts = -10;
-    endConditionDetail = `Collapsed at ${formatTime(collapseTime)} (<5:00)`;
-  } else if (collapseTime < 480) {
-    endConditionPts = -6;
-    endConditionDetail = `Collapsed at ${formatTime(collapseTime)} (5:00–8:00)`;
+  // Survival bonus (highest tier only, no stacking)
+  let survivalBonus: number;
+  let survivalDetail: string;
+  if (elapsedTime >= 600) {
+    survivalBonus = 10;
+    survivalDetail = "Full duration reached";
+  } else if (elapsedTime >= 480) {
+    survivalBonus = 5;
+    survivalDetail = `Survived to ${formatTime(elapsedTime)} (≥8:00)`;
+  } else if (elapsedTime >= 300) {
+    survivalBonus = 3;
+    survivalDetail = `Survived to ${formatTime(elapsedTime)} (≥5:00)`;
   } else {
-    endConditionPts = -3;
-    endConditionDetail = `Collapsed at ${formatTime(collapseTime)} (≥8:00)`;
+    survivalBonus = 0;
+    survivalDetail = `Collapsed at ${formatTime(elapsedTime)}`;
   }
 
-  const rawScore = basePts + satietyPts + infectionPts + sickPts + resourcePts + decisionScore + endConditionPts;
+  const rawScore = basePts + satietyPts + infectionPts + sickPts + resourcePts + decisionScore + survivalBonus;
 
-  // Normalize raw score to −20…+20
-  const finalScore = Math.max(-20, Math.min(20, Math.round(((rawScore - (-60)) / 120) * 40 - 20)));
+  // Score is 0+ (clamp negatives to 0)
+  const finalScore = Math.max(0, rawScore);
 
   const outcome = getOutcomeLabel(finalScore);
 
   const rows: { label: string; pts: number; detail: string }[] = [
-    { label: "Survivors alive",  pts: alive.length * 6,    detail: `${alive.length} × +6`   },
+    { label: "Survivors alive",  pts: alive.length * 10,   detail: `${alive.length} × +10`  },
     { label: "Deaths",           pts: dead.length * -10,   detail: `${dead.length} × −10`   },
     { label: "Zombies",          pts: zombies.length * -6,  detail: `${zombies.length} × −6` },
     { label: "Satiety",          pts: satietyPts,           detail: "per alive survivor"      },
@@ -801,7 +807,7 @@ function ResultsScreen({ data }: { data: ResultsData }) {
     { label: "Sickness",         pts: sickPts,              detail: `sick at end: −2, recovered: +1` },
     { label: "Protein used",     pts: resourcePts,          detail: `${proteinUsed} × +1`    },
     { label: "Decisions",        pts: decisionScore,        detail: "choice events"           },
-    { label: "End condition",    pts: endConditionPts,      detail: endConditionDetail        },
+    { label: "Survival bonus",   pts: survivalBonus,        detail: survivalDetail            },
   ];
 
   return (
@@ -810,8 +816,7 @@ function ResultsScreen({ data }: { data: ResultsData }) {
         <div className="text-center">
           <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground mb-3 font-military">// {formatTime(elapsedTime)}</p>
           <p className={`font-military text-5xl tracking-widest mb-2 uppercase ${outcome.cls}`}>{outcome.label}</p>
-          <p className="text-5xl font-mono font-bold text-foreground tabular-nums">{finalScore >= 0 ? "+" : ""}{finalScore}</p>
-          <p className="text-xs text-muted-foreground mt-1 font-mono">raw {rawScore >= 0 ? "+" : ""}{rawScore} → normalized −20…+20</p>
+          <p className="text-5xl font-mono font-bold text-foreground tabular-nums">{finalScore}</p>
         </div>
 
         <div className="border border-stone-800 bg-card overflow-hidden">
