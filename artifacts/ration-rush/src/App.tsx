@@ -173,11 +173,11 @@ const GAME_EVENTS: GameEvent[] = [
   },
   {
     time: 270,
-    message: "Aid delivery — +3 Basic rations received.",
+    message: "Aid delivery — +2 Basic rations received.",
     logType: "good",
     applyInventory: (inv) => ({
       ...inv,
-      basic: { ...inv.basic, count: inv.basic.count + 3 },
+      basic: { ...inv.basic, count: inv.basic.count + 2 },
     }),
   },
   {
@@ -285,7 +285,7 @@ const INITIAL_SURVIVORS: Survivor[] = [
 const INITIAL_INVENTORY: Record<FoodType, FoodItem> = {
   basic:   { type: "basic",   label: "Basic",   satietyGain: 10, count: 15 },
   protein: { type: "protein", label: "Protein", satietyGain: 20, count: 6  },
-  expired: { type: "expired", label: "Expired", satietyGain: 20, count: 4  },
+  expired: { type: "expired", label: "Expired", satietyGain: 10, count: 4  },
 };
 
 // ─── helpers ────────────────────────────────────────────────────────────────
