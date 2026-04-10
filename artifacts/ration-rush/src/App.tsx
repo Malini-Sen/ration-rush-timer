@@ -755,7 +755,7 @@ function getOutcomeLabel(finalScore: number): { label: string; cls: string } {
 }
 
 function ResultsScreen({ data }: { data: ResultsData }) {
-  const { survivors, elapsedTime, proteinUsed, decisionScore, collapseTime } = data;
+  const { survivors, elapsedTime, decisionScore, collapseTime } = data;
 
   const alive   = survivors.filter((s) => !s.dead && !s.zombie);
   const dead    = survivors.filter((s) => s.dead);
@@ -780,9 +780,6 @@ function ResultsScreen({ data }: { data: ResultsData }) {
   const recoveredCount = survivors.filter((s) => s.recoveredFromSick).length;
   const sickPts = sickAtEnd * -2 + recoveredCount * 1;
 
-  // Resource efficiency: +1 per protein used
-  const resourcePts = proteinUsed;
-
   // Survival bonus (highest tier only, no stacking)
   let survivalBonus: number;
   let survivalDetail: string;
@@ -800,10 +797,11 @@ function ResultsScreen({ data }: { data: ResultsData }) {
     survivalDetail = `Collapsed at ${formatTime(elapsedTime)}`;
   }
 
-  const rawScore = basePts + satietyPts + infectionPts + sickPts + resourcePts + survivalBonus;
+  // Base score: survivors + satiety only — clamped to 0
+  const rawScore = basePts + satietyPts;
 
-  // Clamp base score to 0, then apply decision bonus/penalty, then clamp again
-  const finalScore = Math.max(0, Math.max(0, rawScore) + decisionScore);
+  // Post-normalization: recovery, sickness, decisions, survival bonus — all applied after clamp, then clamp again
+  const finalScore = Math.max(0, Math.max(0, rawScore) + infectionPts + sickPts + decisionScore + survivalBonus);
 
   const outcome = getOutcomeLabel(finalScore);
 
@@ -814,7 +812,6 @@ function ResultsScreen({ data }: { data: ResultsData }) {
     { label: "Satiety",          pts: satietyPts,           detail: "per alive survivor"      },
     { label: "Infection cures",  pts: infectionPts,         detail: `${curedCount} × +2`      },
     { label: "Sickness",         pts: sickPts,              detail: `sick at end: −2, recovered: +1` },
-    { label: "Protein used",     pts: resourcePts,          detail: `${proteinUsed} × +1`    },
     { label: "Decisions",        pts: decisionScore,        detail: "choice events"           },
     { label: "Survival bonus",   pts: survivalBonus,        detail: survivalDetail            },
   ];
