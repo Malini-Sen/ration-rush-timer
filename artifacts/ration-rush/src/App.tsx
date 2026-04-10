@@ -508,7 +508,7 @@ function SurvivorCard({ survivor: s, inventory, onFeed, onIsolate, onMedicTreat,
         </div>
       )}
 
-      <div className="grid grid-cols-3 gap-1 pt-0.5">
+      <div className="flex flex-col gap-1 pt-0.5">
         {foods.map((type) => {
           const item = inventory[type];
           const disabled = blocked || item.count === 0;
@@ -577,7 +577,7 @@ function InventoryPanel({ inventory, sickDuration, drainRate, foodLocked }: {
   };
   const tagLabel: Record<FoodType, string> = {
     basic:   "Basic Ration",
-    protein: "MRE Pack",
+    protein: "Protein Pack",
     expired: "⚠ Spoiled",
   };
 
