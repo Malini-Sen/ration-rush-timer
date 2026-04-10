@@ -313,6 +313,15 @@ const GAME_EVENTS: GameEvent[] = [
     }),
   },
   {
+    time: 530,
+    message: "Relief drop — +1 Protein recovered.",
+    logType: "good",
+    applyInventory: (inv) => ({
+      ...inv,
+      protein: { ...inv.protein, count: inv.protein.count + 1 },
+    }),
+  },
+  {
     time: 540,
     message: "Supply lines cut — no more food can be distributed.",
     logType: "danger",
@@ -960,7 +969,7 @@ const MISSION_BRIEF = [
   },
   {
     heading: "OBJECTIVE",
-    body: "Maintain stability. Minimize losses. Survive until extraction.",
+    body: "Maintain stability. Minimize losses. Endure as long as possible — every second counts.",
   },
 ];
 
