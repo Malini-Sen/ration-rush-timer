@@ -834,6 +834,20 @@ function RulesCard() {
     { text: "Isolate only delays zombie turn — does not cure" },
   ];
 
+  const scoring = [
+    { label: "Alive",              pts: "+6 each"          },
+    { label: "Dead",               pts: "−10 each"         },
+    { label: "Zombie",             pts: "−6 each"          },
+    { label: "Satiety ≥70 (alive)", pts: "+2 each"         },
+    { label: "Satiety ≥40 (alive)", pts: "+1 each"         },
+    { label: "Infection cured",    pts: "+2 each"          },
+    { label: "Sick at end",        pts: "−2 each"          },
+    { label: "Recovered from sick",pts: "+1 each"          },
+    { label: "Protein used",       pts: "+1 each"          },
+    { label: "Balanced diet (≥2 types, not sick)", pts: "+1 each" },
+    { label: "Decisions",          pts: "±variable"        },
+  ];
+
   return (
     <div className="border border-stone-800 p-4 bg-card flex flex-col gap-3">
       <p className="font-military text-[10px] uppercase tracking-widest text-muted-foreground">// Field Protocols</p>
@@ -845,6 +859,17 @@ function RulesCard() {
           </li>
         ))}
       </ul>
+      <div className="border-t border-stone-900 pt-2.5">
+        <p className="font-military text-[10px] uppercase tracking-widest text-muted-foreground mb-2">// Scoring (normalized −20…+20)</p>
+        <div className="flex flex-col gap-1">
+          {scoring.map((s) => (
+            <div key={s.label} className="flex items-center justify-between gap-2 text-xs">
+              <span className="text-stone-600 leading-snug">{s.label}</span>
+              <span className="font-mono text-stone-500 shrink-0">{s.pts}</span>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
