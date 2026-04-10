@@ -903,18 +903,34 @@ function RulesCard() {
   );
 }
 
-function IntroScreen({ onStart }: { onStart: () => void }) {
-  const rules = [
-    "Allocate food to keep survivors alive",
-    "Satiety decreases over time — feed before it hits zero",
-    "Critical survivors become Infected after 30s",
-    "Infected survivors turn Zombie after 45s — Isolate to delay, but it does not cure",
-    "Medic Treat cures Infection or Sickness — 1× use only for the entire run",
-    "Expired food causes Sick — food only half effective while sick",
-    "Events will strike resources and survivors",
-    "Keep your team alive until extraction arrives",
-  ];
+const MISSION_BRIEF = [
+  {
+    heading: "MISSION BRIEF",
+    body: "You are responsible for the survival of your team until extraction arrives.",
+  },
+  {
+    heading: "SITUATION",
+    body: "Resources are limited. Conditions are deteriorating.\nSatiety will decline over time, and neglect will have consequences.",
+  },
+  {
+    heading: "THREATS",
+    body: "Survivors who fall into a critical state will become infected.\nIf not managed, infection will progress and result in permanent loss.\nSickness will further reduce recovery and strain resources.",
+  },
+  {
+    heading: "OPERATIONS",
+    body: "Allocate food to stabilize your team.\nUse isolation to delay infection when necessary.\nMedical intervention is limited—use it with care.",
+  },
+  {
+    heading: "CONDITIONS",
+    body: "Unexpected events will disrupt your plan.\nEvery decision will impact your final outcome.",
+  },
+  {
+    heading: "OBJECTIVE",
+    body: "Maintain stability. Minimize losses. Survive until extraction.",
+  },
+];
 
+function IntroScreen({ onStart }: { onStart: () => void }) {
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-background px-4 py-12">
       <div className="w-full max-w-lg flex flex-col items-center gap-8">
@@ -922,24 +938,20 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
         <div className="text-center">
           <p className="text-[10px] font-military tracking-[0.4em] text-red-900 uppercase mb-4">☢ CLASSIFIED OPERATION ☢</p>
           <h1
-            className="font-military text-7xl tracking-widest text-red-700 uppercase leading-none mb-3"
+            className="font-military text-7xl tracking-widest text-red-700 uppercase leading-none"
             style={{ textShadow: "0 0 40px rgba(160,0,0,0.45), 2px 2px 0 rgba(0,0,0,0.9)" }}
           >
             RATION<br />RUSH
           </h1>
-          <p className="text-xs text-muted-foreground tracking-widest uppercase font-military">Survive · Feed · Decide</p>
         </div>
 
-        <div className="w-full border border-stone-800 bg-card px-6 py-5">
-          <p className="text-[10px] uppercase tracking-widest text-red-800 font-military mb-4">// Operational Briefing</p>
-          <ul className="flex flex-col gap-3 list-none">
-            {rules.map((rule) => (
-              <li key={rule} className="flex items-start gap-3 text-sm text-foreground/80">
-                <span className="shrink-0 text-red-800 font-bold mt-0.5">▸</span>
-                {rule}
-              </li>
-            ))}
-          </ul>
+        <div className="w-full border border-stone-800 bg-card px-6 py-5 flex flex-col gap-5">
+          {MISSION_BRIEF.map(({ heading, body }) => (
+            <div key={heading}>
+              <p className="text-[10px] uppercase tracking-widest text-red-800 font-military mb-1.5">// {heading}</p>
+              <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-line">{body}</p>
+            </div>
+          ))}
         </div>
 
         <button
@@ -947,7 +959,7 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
           className="px-10 py-4 text-lg font-military uppercase tracking-[0.2em] bg-red-900 text-red-100 border border-red-700 cursor-pointer transition-all hover:bg-red-800 hover:border-red-600"
           style={{ textShadow: "0 0 12px rgba(255,120,120,0.25)" }}
         >
-          ▶ Begin Simulation
+          ▶ Begin
         </button>
       </div>
     </div>
