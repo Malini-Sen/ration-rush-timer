@@ -3,10 +3,13 @@ import { useState, useEffect, useRef, useCallback } from "react";
 const TOTAL_SECONDS = 600;
 const SATIETY_INTERVAL = 40;
 const SATIETY_DRAIN = 10;
+const SICK_DRAIN_INTERVAL = 20;
+const SICK_DRAIN_AMOUNT = 5;
 const SICK_DURATION = 60;
 const CRITICAL_TO_INFECTED = 30;
 const INFECTED_TO_ZOMBIE = 45;
 const STARVATION_TO_DEAD = 45;
+const ISOLATION_DURATION = 120;
 
 type SatietyStatus = "Stable" | "Weak" | "Critical";
 type FoodType = "basic" | "protein" | "expired";
@@ -32,6 +35,7 @@ interface Survivor {
   infected: boolean;
   zombie: boolean;
   isolated: boolean;
+  isolationDuration: number;
   fedBasic: boolean;
   fedProtein: boolean;
   fedExpired: boolean;
@@ -67,11 +71,13 @@ interface ChoiceEventDef {
   yesRequiresBasic?: number;
   applyYes: (
     setInventory: (fn: (p: Record<FoodType, FoodItem>) => Record<FoodType, FoodItem>) => void,
-    setScore: (fn: (p: number) => number) => void
+    setScore: (fn: (p: number) => number) => void,
+    setSurvivors?: (fn: (p: Survivor[]) => Survivor[]) => void
   ) => void;
   applyNo?: (
     setInventory: (fn: (p: Record<FoodType, FoodItem>) => Record<FoodType, FoodItem>) => void,
-    setScore: (fn: (p: number) => number) => void
+    setScore: (fn: (p: number) => number) => void,
+    setSurvivors?: (fn: (p: Survivor[]) => Survivor[]) => void
   ) => void;
 }
 
@@ -86,6 +92,22 @@ interface PendingChoice {
 }
 
 const CHOICE_EVENTS: ChoiceEventDef[] = [
+  {
+    time: 150,
+    prompt: "Ration strictly to conserve supplies?",
+    detail: "Tighten rations now — all survivors lose 10 satiety, but gain +5 Basic food.",
+    yesLabel: "Yes — ration strictly (−10 satiety all, +5 Basic)",
+    noLabel: "No — keep current rations",
+    applyYes: (_setInventory, _setScore, setSurvivors) => {
+      _setInventory((prev) => ({
+        ...prev,
+        basic: { ...prev.basic, count: prev.basic.count + 5 },
+      }));
+      setSurvivors?.((prev) =>
+        prev.map((s) => (s.dead || s.zombie ? s : { ...s, satiety: Math.max(0, s.satiety - 10) }))
+      );
+    },
+  },
   {
     time: 360,
     prompt: "Feed an outsider?",
@@ -124,6 +146,17 @@ const CHOICE_EVENTS: ChoiceEventDef[] = [
 ];
 
 const GAME_EVENTS: GameEvent[] = [
+  {
+    time: 90,
+    message: "Medic collapses on patrol — loses 15 satiety.",
+    logType: "danger",
+    applySurvivors: (ss) =>
+      ss.map((s) =>
+        s.id === "medic" && !s.dead && !s.zombie
+          ? { ...s, satiety: Math.max(0, s.satiety - 15) }
+          : s
+      ),
+  },
   {
     time: 60,
     message: "Supply contaminated — 4 Basic rations turned Expired.",
@@ -275,11 +308,11 @@ const BLANK: Pick<Survivor, "wasInfectedAndCured" | "recoveredFromSick" | "fedWh
 };
 
 const INITIAL_SURVIVORS: Survivor[] = [
-  { id: "engineer", name: "Engineer", role: "Engineer", satiety: 100, dead: false, starvationDuration: 0, sicknessDuration: 0, criticalDuration: 0, infectionDuration: 0, infected: false, zombie: false, isolated: false, fedBasic: false, fedProtein: false, fedExpired: false, ...BLANK },
-  { id: "medic",    name: "Medic",    role: "Medic",    satiety: 100, dead: false, starvationDuration: 0, sicknessDuration: 0, criticalDuration: 0, infectionDuration: 0, infected: false, zombie: false, isolated: false, fedBasic: false, fedProtein: false, fedExpired: false, ...BLANK },
-  { id: "worker",   name: "Worker",   role: "Worker",   satiety: 100, dead: false, starvationDuration: 0, sicknessDuration: 0, criticalDuration: 0, infectionDuration: 0, infected: false, zombie: false, isolated: false, fedBasic: false, fedProtein: false, fedExpired: false, ...BLANK },
-  { id: "child",    name: "Child",    role: "Child",    satiety: 100, dead: false, starvationDuration: 0, sicknessDuration: 0, criticalDuration: 0, infectionDuration: 0, infected: false, zombie: false, isolated: false, fedBasic: false, fedProtein: false, fedExpired: false, ...BLANK },
-  { id: "elderly",  name: "Elder",    role: "Elder",    satiety: 100, dead: false, starvationDuration: 0, sicknessDuration: 0, criticalDuration: 0, infectionDuration: 0, infected: false, zombie: false, isolated: false, fedBasic: false, fedProtein: false, fedExpired: false, ...BLANK },
+  { id: "engineer", name: "Engineer", role: "Engineer", satiety: 100, dead: false, starvationDuration: 0, sicknessDuration: 0, criticalDuration: 0, infectionDuration: 0, infected: false, zombie: false, isolated: false, isolationDuration: 0, fedBasic: false, fedProtein: false, fedExpired: false, ...BLANK },
+  { id: "medic",    name: "Medic",    role: "Medic",    satiety: 100, dead: false, starvationDuration: 0, sicknessDuration: 0, criticalDuration: 0, infectionDuration: 0, infected: false, zombie: false, isolated: false, isolationDuration: 0, fedBasic: false, fedProtein: false, fedExpired: false, ...BLANK },
+  { id: "worker",   name: "Worker",   role: "Worker",   satiety: 100, dead: false, starvationDuration: 0, sicknessDuration: 0, criticalDuration: 0, infectionDuration: 0, infected: false, zombie: false, isolated: false, isolationDuration: 0, fedBasic: false, fedProtein: false, fedExpired: false, ...BLANK },
+  { id: "child",    name: "Child",    role: "Child",    satiety: 100, dead: false, starvationDuration: 0, sicknessDuration: 0, criticalDuration: 0, infectionDuration: 0, infected: false, zombie: false, isolated: false, isolationDuration: 0, fedBasic: false, fedProtein: false, fedExpired: false, ...BLANK },
+  { id: "elderly",  name: "Elder",    role: "Elder",    satiety: 100, dead: false, starvationDuration: 0, sicknessDuration: 0, criticalDuration: 0, infectionDuration: 0, infected: false, zombie: false, isolated: false, isolationDuration: 0, fedBasic: false, fedProtein: false, fedExpired: false, ...BLANK },
 ];
 
 const INITIAL_INVENTORY: Record<FoodType, FoodItem> = {
@@ -301,7 +334,7 @@ function isStarving(s: Survivor): boolean {
 }
 
 function isUnfeedable(s: Survivor): boolean {
-  return s.dead || s.zombie;
+  return s.dead || s.zombie || s.isolated;
 }
 
 function formatTime(seconds: number): string {
@@ -310,10 +343,16 @@ function formatTime(seconds: number): string {
   return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
 }
 
-function tickSurvivor(s: Survivor, isDrainTick: boolean, drainRate: number): Survivor {
+function tickSurvivor(s: Survivor, isDrainTick: boolean, isSickTick: boolean, drainRate: number): Survivor {
   if (s.dead || s.zombie) return s;
 
-  const newSatiety = isDrainTick ? Math.max(0, s.satiety - drainRate) : s.satiety;
+  // Base satiety drain
+  let newSatiety = isDrainTick ? Math.max(0, s.satiety - drainRate) : s.satiety;
+
+  // Sickness: extra drain every SICK_DRAIN_INTERVAL seconds
+  if (isSickTick && s.sicknessDuration > 0) {
+    newSatiety = Math.max(0, newSatiety - SICK_DRAIN_AMOUNT);
+  }
 
   // Sickness counts down every second; auto-clears and marks recovery
   let newSick = s.sicknessDuration;
@@ -323,7 +362,26 @@ function tickSurvivor(s: Survivor, isDrainTick: boolean, drainRate: number): Sur
     if (newSick === 0) recoveredFromSick = true;
   }
 
-  // Starvation counts up every second at satiety 0
+  // Isolation: tick duration; cure infection and release after ISOLATION_DURATION
+  let isolated = s.isolated;
+  let isolationDuration = s.isolationDuration;
+  let infected = s.infected;
+  let infectionDuration = s.infectionDuration;
+  let criticalDuration = s.criticalDuration;
+  let justReleasedFromIsolation = false;
+
+  if (isolated) {
+    isolationDuration += 1;
+    if (isolationDuration >= ISOLATION_DURATION) {
+      isolated = false;
+      isolationDuration = 0;
+      infected = false;
+      infectionDuration = 0;
+      justReleasedFromIsolation = true;
+    }
+  }
+
+  // Starvation counts up every second at satiety 0 (isolation does NOT stop starvation)
   let starvationDuration = s.starvationDuration;
   let dead = false;
   if (newSatiety === 0) {
@@ -334,20 +392,18 @@ function tickSurvivor(s: Survivor, isDrainTick: boolean, drainRate: number): Sur
   }
 
   if (dead) {
-    return { ...s, satiety: newSatiety, starvationDuration, dead: true, sicknessDuration: newSick, recoveredFromSick };
+    return { ...s, satiety: newSatiety, starvationDuration, dead: true, sicknessDuration: newSick, recoveredFromSick, isolated, isolationDuration, infected, infectionDuration, criticalDuration };
   }
 
   const satietyStatus = getSatietyStatus(newSatiety);
-  let infected = s.infected;
   let zombie = false;
-  let criticalDuration = s.criticalDuration;
-  let infectionDuration = s.infectionDuration;
 
-  if (infected) {
-    // Infection timer ALWAYS ticks — never pauses, even when isolated
+  if (infected && !isolated) {
+    // Infection timer ticks only when NOT isolated
     infectionDuration += 1;
     if (infectionDuration >= INFECTED_TO_ZOMBIE) zombie = true;
-  } else {
+  } else if (!infected && !isolated && !justReleasedFromIsolation) {
+    // Critical → Infected only when not isolated and not just released
     if (satietyStatus === "Critical") {
       criticalDuration += 1;
       if (criticalDuration >= CRITICAL_TO_INFECTED) {
@@ -360,7 +416,7 @@ function tickSurvivor(s: Survivor, isDrainTick: boolean, drainRate: number): Sur
     }
   }
 
-  return { ...s, satiety: newSatiety, starvationDuration, dead, sicknessDuration: newSick, recoveredFromSick, criticalDuration, infectionDuration, infected, zombie };
+  return { ...s, satiety: newSatiety, starvationDuration, dead, sicknessDuration: newSick, recoveredFromSick, criticalDuration, infectionDuration, infected, zombie, isolated, isolationDuration };
 }
 
 // ─── style helpers ───────────────────────────────────────────────────────────
@@ -450,9 +506,9 @@ function SurvivorCard({ survivor: s, inventory, onFeed, onIsolate, onMedicTreat,
           <span className={`text-[10px] font-semibold px-2 py-0.5 border uppercase tracking-wide ${mainBadge.cls}`}>
             {mainBadge.label}
           </span>
-          {s.isolated && s.infected && (
+          {s.isolated && (
             <span className="text-[10px] font-semibold px-2 py-0.5 border bg-purple-950/40 text-purple-400 border-purple-900 uppercase tracking-wide">
-              Isolated
+              ⚿ Isolated
             </span>
           )}
           {s.sicknessDuration > 0 && (
@@ -495,9 +551,9 @@ function SurvivorCard({ survivor: s, inventory, onFeed, onIsolate, onMedicTreat,
               Turns zombie in <span className="font-mono font-semibold">{INFECTED_TO_ZOMBIE - s.infectionDuration}s</span>
             </span>
           )}
-          {s.infected && s.isolated && (
-            <span className="text-purple-400 font-semibold tabular-nums">
-              Isolated — turns zombie in <span className="font-mono">{INFECTED_TO_ZOMBIE - s.infectionDuration}s</span>
+          {s.isolated && (
+            <span className="text-purple-400 tabular-nums">
+              Cured in <span className="font-mono font-semibold">{ISOLATION_DURATION - s.isolationDuration}s</span>
             </span>
           )}
           {!s.infected && satStatus === "Critical" && s.criticalDuration > 0 && !starving && (
@@ -822,8 +878,9 @@ function RulesCard() {
     { text: `Infected (${INFECTED_TO_ZOMBIE}s) → Zombie` },
     { text: `Starvation (${STARVATION_TO_DEAD}s) → Dead` },
     { text: "Expired food → Sick (half effect)" },
-    { text: "Medic Treat cures Infected or Sick — 1× use only" },
-    { text: "Isolate only delays zombie turn — does not cure" },
+    { text: "Isolate: pauses infection timer — cured after 120s (costs 2 Basic, cannot be fed while isolated)" },
+    { text: "Medic Treat instantly cures Infection or Sickness — 1× use only" },
+    { text: "Sickness: extra −5 satiety every 20s" },
   ];
 
   return (
@@ -944,7 +1001,8 @@ function GameScreen() {
   useEffect(() => {
     if (!started || elapsedTime === 0) return;
     const isDrainTick = elapsedTime % SATIETY_INTERVAL === 0;
-    setSurvivors((prev) => prev.map((s) => tickSurvivor(s, isDrainTick, drainRateRef.current)));
+    const isSickTick  = elapsedTime % SICK_DRAIN_INTERVAL === 0;
+    setSurvivors((prev) => prev.map((s) => tickSurvivor(s, isDrainTick, isSickTick, drainRateRef.current)));
   }, [elapsedTime, started]);
 
   // Event system
@@ -972,12 +1030,12 @@ function GameScreen() {
         noLabel: choice.noLabel,
         yesRequiresBasic: choice.yesRequiresBasic,
         onYes: () => {
-          choice.applyYes(setInventory, setScore);
+          choice.applyYes(setInventory, setScore, setSurvivors);
           setPendingChoice(null);
           setPaused(false);
         },
         onNo: () => {
-          if (choice.applyNo) choice.applyNo(setInventory, setScore);
+          if (choice.applyNo) choice.applyNo(setInventory, setScore, setSurvivors);
           setPendingChoice(null);
           setPaused(false);
         },
@@ -1022,7 +1080,7 @@ function GameScreen() {
       return { ...prev, basic: { ...prev.basic, count: prev.basic.count - 2 } };
     });
     setSurvivors((prev) =>
-      prev.map((s) => (s.id === survivorId && s.infected && !s.isolated ? { ...s, isolated: true } : s))
+      prev.map((s) => (s.id === survivorId && s.infected && !s.isolated ? { ...s, isolated: true, isolationDuration: 0 } : s))
     );
   }, []);
 
@@ -1036,6 +1094,7 @@ function GameScreen() {
           sicknessDuration: 0,
           infected: false,
           isolated: false,
+          isolationDuration: 0,
           criticalDuration: 0,
           infectionDuration: 0,
           wasInfectedAndCured: s.wasInfectedAndCured || s.infected,
