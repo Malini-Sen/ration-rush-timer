@@ -9,7 +9,7 @@ const SICK_DURATION = 60;
 const CRITICAL_TO_INFECTED = 30;
 const INFECTED_TO_ZOMBIE = 45;
 const STARVATION_TO_DEAD = 45;
-const ISOLATION_DURATION = 120;
+const ISOLATION_DURATION = 90;
 
 type SatietyStatus = "Stable" | "Weak" | "Critical";
 type FoodType = "basic" | "protein" | "expired";
@@ -583,9 +583,9 @@ function SurvivorCard({ survivor: s, inventory, onFeed, onIsolate, onMedicTreat,
       </div>
 
       {!s.dead && !s.zombie &&
-        (s.infected && !s.isolated || (s.sicknessDuration > 0 || s.infected) && !medicUsed) && (
+        (!s.isolated || ((s.sicknessDuration > 0 || s.infected) && !medicUsed)) && (
         <div className="flex flex-col gap-1.5 border-t border-zinc-900 pt-2.5">
-          {s.infected && !s.isolated && (
+          {!s.isolated && (
             (() => {
               const canIsolate = inventory.basic.count >= 2;
               return (
@@ -1080,7 +1080,7 @@ function GameScreen() {
       return { ...prev, basic: { ...prev.basic, count: prev.basic.count - 2 } };
     });
     setSurvivors((prev) =>
-      prev.map((s) => (s.id === survivorId && s.infected && !s.isolated ? { ...s, isolated: true, isolationDuration: 0 } : s))
+      prev.map((s) => (s.id === survivorId && !s.dead && !s.zombie && !s.isolated ? { ...s, isolated: true, isolationDuration: 0 } : s))
     );
   }, []);
 
