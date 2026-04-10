@@ -883,7 +883,6 @@ function GameScreen() {
   const [pendingChoice, setPendingChoice] = useState<PendingChoice | null>(null);
   const [proteinUsed, setProteinUsed]   = useState(0);
   const [submitted, setSubmitted]       = useState(false);
-  const [serverScore, setServerScore]   = useState<number | null>(null);
   const logIdRef                        = useRef(0);
   const intervalRef                     = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -1038,7 +1037,7 @@ function GameScreen() {
   if (submitted) {
     return (
       <ResultsScreen
-        data={{ survivors, elapsedTime, proteinUsed, choiceScore: score, serverScore }}
+        data={{ survivors, elapsedTime, proteinUsed, decisionScore: score }}
         onRestart={() => window.location.reload()}
       />
     );
