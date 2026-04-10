@@ -874,13 +874,12 @@ function ChoiceModal({ choice, inventory }: { choice: PendingChoice; inventory: 
 function RulesCard() {
   const rules = [
     { text: "Keep satiety above 0" },
-    { text: `Critical (${CRITICAL_TO_INFECTED}s) → Infected` },
-    { text: `Infected (${INFECTED_TO_ZOMBIE}s) → Zombie` },
+    { text: `Critical (${CRITICAL_TO_INFECTED}s) → Infected → (${INFECTED_TO_ZOMBIE}s) Zombie` },
     { text: `Starvation (${STARVATION_TO_DEAD}s) → Dead` },
     { text: "Expired food → Sick (half effect)" },
-    { text: "Isolate: pauses infection timer — cured after 120s (costs 2 Basic, cannot be fed while isolated)" },
-    { text: "Medic Treat instantly cures Infection or Sickness — 1× use only" },
-    { text: "Sickness: extra −5 satiety every 20s" },
+    { text: `Isolate: pauses infection → cures in ${ISOLATION_DURATION}s (−2 Basic, no feeding)` },
+    { text: "Medic Treat: cures Infection/Sickness (1× use)" },
+    { text: "Sickness: −5 satiety every 20s" },
   ];
 
   return (
