@@ -947,7 +947,7 @@ const MISSION_BRIEF = [
   },
   {
     heading: "OPERATIONS",
-    body: "Allocate food to stabilize your team.\nUse isolation to delay infection when necessary.\nMedical intervention is limited—use it with care.",
+    body: "Allocate food to stabilize your team.\nUse isolation to delay infection when necessary.\nMedical intervention is limited. USE IT WITH CARE.",
   },
   {
     heading: "CONDITIONS",
