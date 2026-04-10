@@ -366,34 +366,34 @@ function tickSurvivor(s: Survivor, isDrainTick: boolean, drainRate: number): Sur
 // ─── style helpers ───────────────────────────────────────────────────────────
 
 function cardBorderClass(s: Survivor): string {
-  if (s.zombie)                 return "border-red-900";
-  if (s.dead)                   return "border-zinc-700 opacity-50";
-  if (isStarving(s))            return "border-red-600";
-  if (s.isolated && s.infected) return "border-cyan-700";
-  if (s.infected)               return "border-red-600";
+  if (s.zombie)                 return "border-red-950";
+  if (s.dead)                   return "border-zinc-800 opacity-40";
+  if (isStarving(s))            return "border-red-800";
+  if (s.isolated && s.infected) return "border-purple-900";
+  if (s.infected)               return "border-purple-900";
   const status = getSatietyStatus(s.satiety);
-  if (status === "Critical")    return "border-red-600 critical-pulse";
-  if (status === "Weak")        return "border-yellow-600";
-  return "border-green-800";
+  if (status === "Critical")    return "border-red-800 critical-pulse";
+  if (status === "Weak")        return "border-yellow-900";
+  return "border-stone-700";
 }
 
 function satietyBarClass(s: Survivor): string {
-  if (s.dead || s.zombie) return "bg-zinc-600";
-  if (isStarving(s))      return "bg-red-600";
-  if (s.infected)         return "bg-red-600";
+  if (s.dead || s.zombie) return "bg-zinc-700";
+  if (isStarving(s))      return "bg-red-800";
+  if (s.infected)         return "bg-purple-900";
   const st = getSatietyStatus(s.satiety);
-  if (st === "Critical")  return "bg-red-500";
-  if (st === "Weak")      return "bg-yellow-500";
-  return "bg-green-500";
+  if (st === "Critical")  return "bg-red-700";
+  if (st === "Weak")      return "bg-yellow-800";
+  return "bg-green-900";
 }
 
 function foodButtonStyle(type: FoodType, disabled: boolean): string {
-  const base = "flex-1 py-1.5 text-xs font-semibold rounded transition-opacity border";
-  if (disabled) return `${base} opacity-30 cursor-not-allowed border-zinc-700 text-zinc-500 bg-transparent`;
+  const base = "flex-1 py-1.5 text-xs font-semibold transition-opacity border uppercase tracking-wide";
+  if (disabled) return `${base} opacity-20 cursor-not-allowed border-zinc-800 text-zinc-600 bg-transparent`;
   switch (type) {
-    case "basic":   return `${base} border-sky-700 text-sky-300 hover:bg-sky-900/40 cursor-pointer`;
-    case "protein": return `${base} border-violet-700 text-violet-300 hover:bg-violet-900/40 cursor-pointer`;
-    case "expired": return `${base} border-amber-700 text-amber-300 hover:bg-amber-900/40 cursor-pointer`;
+    case "basic":   return `${base} border-stone-700 text-stone-400 bg-stone-900/30 hover:bg-stone-800/50 cursor-pointer`;
+    case "protein": return `${base} border-green-900 text-green-600 bg-green-950/20 hover:bg-green-900/30 cursor-pointer`;
+    case "expired": return `${base} border-lime-900 text-lime-700 bg-lime-950/10 hover:bg-lime-900/20 cursor-pointer`;
   }
 }
 
@@ -415,49 +415,49 @@ function SurvivorCard({ survivor: s, inventory, onFeed, onIsolate, onMedicTreat,
   const satStatus = getSatietyStatus(s.satiety);
 
   const mainBadge = s.zombie
-    ? { label: "Zombie",   cls: "bg-red-950/70 text-red-400 border-red-900" }
+    ? { label: "💀 Zombie",   cls: "bg-red-950 text-red-500 border-red-900" }
     : s.dead
-      ? { label: "Dead",     cls: "bg-zinc-800/60 text-zinc-500 border-zinc-700" }
+      ? { label: "✕ Dead",     cls: "bg-zinc-900 text-zinc-500 border-zinc-800" }
       : starving
-        ? { label: "Starving", cls: "bg-red-900/50 text-red-300 border-red-700 animate-pulse" }
+        ? { label: "⚠ Starving", cls: "bg-red-950 text-red-400 border-red-800 badge-flash" }
         : s.infected
-          ? { label: "Infected", cls: "bg-red-900/50 text-red-300 border-red-700" }
+          ? { label: "☣ Infected", cls: "bg-purple-950 text-purple-400 border-purple-900" }
           : satStatus === "Critical"
-            ? { label: "Critical", cls: "bg-red-900/40 text-red-300 border-red-700" }
+            ? { label: "▲ Critical", cls: "bg-red-950/60 text-red-400 border-red-900 badge-flash" }
             : satStatus === "Weak"
-              ? { label: "Weak",     cls: "bg-yellow-900/40 text-yellow-300 border-yellow-700" }
-              : { label: "Stable",   cls: "bg-green-900/40 text-green-300 border-green-800" };
+              ? { label: "Weak",      cls: "bg-yellow-950/40 text-yellow-700 border-yellow-900" }
+              : { label: "Stable",    cls: "bg-stone-900/60 text-stone-400 border-stone-700" };
 
-  const nameColor = s.dead || s.zombie ? "text-zinc-500" : starving ? "text-red-400" : "text-foreground";
+  const nameColor = s.dead || s.zombie ? "text-zinc-600" : starving ? "text-red-400" : "text-foreground";
   const foods: FoodType[] = ["basic", "protein", "expired"];
 
-  const zombieBg   = s.zombie ? "bg-red-950/25" : "";
+  const zombieBg   = s.zombie ? "bg-red-950/10" : "";
   const infectedGlow: React.CSSProperties = s.infected && !s.dead && !s.zombie
-    ? { boxShadow: "0 0 14px 2px rgba(220, 38, 38, 0.3)" }
+    ? { boxShadow: "0 0 18px 3px rgba(120, 0, 180, 0.2)" }
     : {};
 
   return (
     <div
-      className={`rounded-xl border p-4 bg-card flex flex-col gap-3 transition-all shadow-md ${cardBorderClass(s)} ${zombieBg}`}
+      className={`border p-4 bg-card flex flex-col gap-3 transition-all shadow-lg ${cardBorderClass(s)} ${zombieBg}`}
       style={infectedGlow}
     >
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0">
-          <p className={`font-bold text-lg leading-tight truncate ${nameColor}`}>{s.name}</p>
-          <p className="text-xs text-muted-foreground uppercase tracking-widest">{s.role}</p>
+          <p className={`font-military text-lg leading-tight truncate ${nameColor}`}>{s.name}</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-widest">{s.role}</p>
         </div>
         <div className="flex flex-col items-end gap-1 shrink-0">
-          <span className={`text-xs font-semibold px-2 py-0.5 rounded border ${mainBadge.cls}`}>
+          <span className={`text-[10px] font-semibold px-2 py-0.5 border uppercase tracking-wide ${mainBadge.cls}`}>
             {mainBadge.label}
           </span>
           {s.isolated && s.infected && (
-            <span className="text-xs font-semibold px-2 py-0.5 rounded border bg-cyan-900/40 text-cyan-300 border-cyan-700">
+            <span className="text-[10px] font-semibold px-2 py-0.5 border bg-purple-950/40 text-purple-400 border-purple-900 uppercase tracking-wide">
               Isolated
             </span>
           )}
           {s.sicknessDuration > 0 && (
-            <span className="text-xs font-semibold px-2 py-0.5 rounded border bg-amber-900/40 text-amber-300 border-amber-700">
-              Sick {s.sicknessDuration}s
+            <span className="text-[10px] font-semibold px-2 py-0.5 border bg-lime-950/30 text-lime-600 border-lime-900 uppercase tracking-wide">
+              ⚕ Sick {s.sicknessDuration}s
             </span>
           )}
         </div>
@@ -465,19 +465,19 @@ function SurvivorCard({ survivor: s, inventory, onFeed, onIsolate, onMedicTreat,
 
       <div>
         <div className="flex justify-between text-xs mb-1">
-          <span className="text-muted-foreground">Satiety</span>
+          <span className="text-[10px] text-muted-foreground uppercase tracking-widest">Satiety</span>
           <span className={`font-mono font-semibold ${
-            s.dead || s.zombie         ? "text-zinc-500"
+            s.dead || s.zombie         ? "text-zinc-600"
             : starving                 ? "text-red-400"
-            : s.infected               ? "text-red-400"
-            : satStatus === "Critical" ? "text-red-400"
-            : satStatus === "Weak"     ? "text-yellow-400"
-            : "text-green-400"
+            : s.infected               ? "text-purple-400"
+            : satStatus === "Critical" ? "text-red-500"
+            : satStatus === "Weak"     ? "text-yellow-700"
+            : "text-green-700"
           }`}>{s.satiety}</span>
         </div>
-        <div className="h-2 rounded-full bg-zinc-800 overflow-hidden">
+        <div className="h-1.5 bg-zinc-900 border border-zinc-800 overflow-hidden">
           <div
-            className={`h-full rounded-full transition-all duration-700 ${satietyBarClass(s)}`}
+            className={`h-full transition-all duration-700 ${satietyBarClass(s)}`}
             style={{ width: `${Math.max(s.satiety, starving ? 3 : 0)}%` }}
           />
         </div>
@@ -486,23 +486,23 @@ function SurvivorCard({ survivor: s, inventory, onFeed, onIsolate, onMedicTreat,
       {!s.dead && !s.zombie && (
         <div className="flex flex-col gap-0.5 text-xs text-muted-foreground">
           {starving && (
-            <span className="tabular-nums text-red-400 font-semibold">
-              Dies in {STARVATION_TO_DEAD - s.starvationDuration}s — feed now!
+            <span className="tabular-nums text-red-400 font-semibold uppercase tracking-wide">
+              ⚠ Dies in {STARVATION_TO_DEAD - s.starvationDuration}s — feed now!
             </span>
           )}
           {s.infected && !s.isolated && (
-            <span className="tabular-nums">
-              Turns zombie in <span className="text-red-400 font-mono font-semibold">{INFECTED_TO_ZOMBIE - s.infectionDuration}s</span>
+            <span className="tabular-nums text-purple-400">
+              Turns zombie in <span className="font-mono font-semibold">{INFECTED_TO_ZOMBIE - s.infectionDuration}s</span>
             </span>
           )}
           {s.infected && s.isolated && (
-            <span className="text-cyan-400 font-semibold tabular-nums">
+            <span className="text-purple-400 font-semibold tabular-nums">
               Isolated — turns zombie in <span className="font-mono">{INFECTED_TO_ZOMBIE - s.infectionDuration}s</span>
             </span>
           )}
           {!s.infected && satStatus === "Critical" && s.criticalDuration > 0 && !starving && (
-            <span className="tabular-nums">
-              Infects in <span className="text-red-400 font-mono font-semibold">{CRITICAL_TO_INFECTED - s.criticalDuration}s</span>
+            <span className="tabular-nums text-red-500">
+              Infects in <span className="font-mono font-semibold">{CRITICAL_TO_INFECTED - s.criticalDuration}s</span>
             </span>
           )}
         </div>
@@ -520,7 +520,7 @@ function SurvivorCard({ survivor: s, inventory, onFeed, onIsolate, onMedicTreat,
               className={foodButtonStyle(type, disabled)}
             >
               {item.label}
-              <span className="ml-1 opacity-70">+{item.satietyGain}</span>
+              <span className="ml-1 opacity-60">+{item.satietyGain}</span>
             </button>
           );
         })}
@@ -528,7 +528,7 @@ function SurvivorCard({ survivor: s, inventory, onFeed, onIsolate, onMedicTreat,
 
       {!s.dead && !s.zombie &&
         (s.infected && !s.isolated || (s.sicknessDuration > 0 || s.infected) && !medicUsed) && (
-        <div className="flex gap-1.5 flex-wrap border-t border-zinc-800 pt-2.5">
+        <div className="flex gap-1.5 flex-wrap border-t border-zinc-900 pt-2.5">
           {s.infected && !s.isolated && (
             (() => {
               const canIsolate = inventory.basic.count >= 2;
@@ -536,14 +536,14 @@ function SurvivorCard({ survivor: s, inventory, onFeed, onIsolate, onMedicTreat,
                 <button
                   disabled={!canIsolate}
                   onClick={() => canIsolate && onIsolate(s.id)}
-                  className={`flex-1 text-xs font-semibold rounded-lg border px-2 py-1.5 transition-all ${
+                  className={`flex-1 text-xs font-semibold border px-2 py-1.5 transition-all uppercase tracking-wide ${
                     canIsolate
-                      ? "border-cyan-700 text-cyan-300 bg-cyan-950/30 hover:bg-cyan-950/60 cursor-pointer"
-                      : "border-zinc-700 text-zinc-500 opacity-40 cursor-not-allowed"
+                      ? "border-purple-900 text-purple-400 bg-purple-950/20 hover:bg-purple-950/40 cursor-pointer"
+                      : "border-zinc-800 text-zinc-600 opacity-30 cursor-not-allowed"
                   }`}
                 >
                   Isolate
-                  <span className="ml-1 opacity-60 font-normal">−2 Basic</span>
+                  <span className="ml-1 opacity-60 font-normal normal-case">−2 Basic</span>
                 </button>
               );
             })()
@@ -551,10 +551,10 @@ function SurvivorCard({ survivor: s, inventory, onFeed, onIsolate, onMedicTreat,
           {(s.sicknessDuration > 0 || s.infected) && !medicUsed && (
             <button
               onClick={() => onMedicTreat(s.id)}
-              className="flex-1 text-xs font-semibold rounded-lg border px-2 py-1.5 border-green-700 text-green-300 bg-green-950/30 hover:bg-green-950/60 cursor-pointer transition-all"
+              className="flex-1 text-xs font-semibold border px-2 py-1.5 border-green-900 text-green-600 bg-green-950/20 hover:bg-green-950/40 cursor-pointer transition-all uppercase tracking-wide"
             >
               Medic Treat
-              <span className="ml-1 opacity-60 font-normal">1×</span>
+              <span className="ml-1 opacity-60 font-normal normal-case">1×</span>
             </button>
           )}
         </div>
@@ -571,24 +571,29 @@ function InventoryPanel({ inventory, sickDuration, drainRate, foodLocked }: {
 }) {
   const items: FoodType[] = ["basic", "protein", "expired"];
   const tagStyle: Record<FoodType, string> = {
-    basic:   "border-sky-700 text-sky-300",
-    protein: "border-violet-700 text-violet-300",
-    expired: "border-amber-700 text-amber-300",
+    basic:   "border-stone-700 text-stone-400 bg-stone-900/20",
+    protein: "border-green-900 text-green-600 bg-green-950/15",
+    expired: "border-lime-900 text-lime-700 bg-lime-950/10",
+  };
+  const tagLabel: Record<FoodType, string> = {
+    basic:   "Basic Ration",
+    protein: "MRE Pack",
+    expired: "⚠ Spoiled",
   };
 
   return (
-    <div className={`w-full rounded-xl border bg-card px-4 py-3 mb-4 ${foodLocked ? "border-red-700" : "border-zinc-700"}`}>
+    <div className={`w-full border bg-card px-4 py-3 mb-4 ${foodLocked ? "border-red-900" : "border-stone-800"}`}>
       <div className="flex items-center justify-between mb-3">
-        <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">Food Inventory</p>
+        <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-military">// Food Inventory</p>
         <div className="flex gap-2 items-center">
           {drainRate > SATIETY_DRAIN && (
-            <span className="text-xs font-semibold text-amber-400 bg-amber-950/40 border border-amber-700 rounded px-2 py-0.5 animate-pulse">
+            <span className="text-[10px] font-semibold text-red-400 bg-red-950/30 border border-red-900 px-2 py-0.5 animate-pulse uppercase tracking-wide">
               drain ×{(drainRate / SATIETY_DRAIN).toFixed(1)}/tick
             </span>
           )}
           {foodLocked && (
-            <span className="text-xs font-bold text-red-300 bg-red-950/50 border border-red-700 rounded px-2 py-0.5 tracking-wide">
-              LOCKED
+            <span className="text-[10px] font-bold text-red-400 bg-red-950/40 border border-red-900 px-2 py-0.5 tracking-widest uppercase font-military">
+              ▓ SUPPLY CUT ▓
             </span>
           )}
         </div>
@@ -598,15 +603,19 @@ function InventoryPanel({ inventory, sickDuration, drainRate, foodLocked }: {
           const item = inventory[type];
           const empty = item.count === 0;
           return (
-            <div key={type} className={`flex items-center gap-2 rounded-lg border px-3 py-2 transition-opacity ${empty ? "opacity-40 border-zinc-700" : tagStyle[type]}`}>
-              <span className={`text-sm font-semibold ${empty ? "text-zinc-500" : ""}`}>{item.label}</span>
+            <div key={type} className={`flex items-center gap-2 border px-3 py-2 transition-opacity ${empty ? "opacity-25 border-zinc-800 text-zinc-600" : tagStyle[type]}`}>
+              <span className={`text-xs font-semibold uppercase tracking-wide ${empty ? "text-zinc-600" : ""}`}>
+                {type === "expired"
+                  ? <><s className="opacity-60">{tagLabel[type]}</s></>
+                  : tagLabel[type]}
+              </span>
               <span className="text-xs text-muted-foreground">+{item.satietyGain}</span>
               {type === "expired" && (
-                <span className={`text-xs font-mono tabular-nums ${sickDuration > SICK_DURATION ? "text-red-400 font-semibold" : "text-muted-foreground"}`}>
+                <span className={`text-xs font-mono tabular-nums ${sickDuration > SICK_DURATION ? "text-red-400 font-semibold" : "text-lime-900"}`}>
                   sick:{sickDuration}s
                 </span>
               )}
-              <span className={`font-mono font-bold text-sm tabular-nums ${empty ? "text-zinc-500" : "text-foreground"}`}>×{item.count}</span>
+              <span className={`font-mono font-bold text-sm tabular-nums ${empty ? "text-zinc-600" : "text-foreground"}`}>×{item.count}</span>
             </div>
           );
         })}
@@ -619,28 +628,28 @@ function EventLog({ entries }: { entries: LogEntry[] }) {
   if (entries.length === 0) return null;
 
   const colorMap: Record<LogType, string> = {
-    danger:  "text-red-400 border-red-900 bg-red-950/30",
-    good:    "text-green-400 border-green-900 bg-green-950/30",
-    neutral: "text-zinc-400 border-zinc-700 bg-zinc-800/30",
+    danger:  "text-red-500 border-red-900/60 bg-red-950/20",
+    good:    "text-green-600 border-green-900/50 bg-green-950/10",
+    neutral: "text-stone-400 border-stone-800 bg-stone-900/20",
   };
 
   const iconMap: Record<LogType, string> = {
-    danger:  "!",
-    good:    "+",
+    danger:  "▲",
+    good:    "▶",
     neutral: "·",
   };
 
   return (
-    <div className="w-full rounded-xl border border-zinc-700 bg-card px-4 py-3 mb-6">
-      <p className="text-xs uppercase tracking-widest text-muted-foreground mb-3 font-medium">Event Log</p>
+    <div className="w-full border border-stone-800 bg-card px-4 py-3 mb-6">
+      <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-3 font-military">// Incident Log</p>
       <div className="flex flex-col gap-1.5 max-h-36 overflow-y-auto">
         {[...entries].reverse().map((entry) => (
           <div
             key={entry.id}
-            className={`flex items-start gap-2 rounded-lg border px-3 py-2 text-xs ${colorMap[entry.type]}`}
+            className={`flex items-start gap-2 border px-3 py-2 text-xs ${colorMap[entry.type]}`}
           >
             <span className="font-bold shrink-0 w-3 text-center">{iconMap[entry.type]}</span>
-            <span className="font-mono text-zinc-500 shrink-0 tabular-nums">{formatTime(entry.time)}</span>
+            <span className="font-mono text-muted-foreground shrink-0 tabular-nums">{formatTime(entry.time)}</span>
             <span className="leading-snug">{entry.message}</span>
           </div>
         ))}
@@ -657,9 +666,9 @@ interface ResultsData {
 }
 
 function getOutcomeLabel(finalScore: number): { label: string; cls: string } {
-  if (finalScore >= 10) return { label: "STABLE SURVIVAL", cls: "text-green-400"  };
-  if (finalScore >= 0)  return { label: "BARELY MADE IT",  cls: "text-yellow-400" };
-  return                       { label: "COLLAPSE",         cls: "text-red-500"   };
+  if (finalScore >= 10) return { label: "STABLE SURVIVAL", cls: "text-green-700"  };
+  if (finalScore >= 0)  return { label: "BARELY MADE IT",  cls: "text-yellow-700" };
+  return                       { label: "COLLAPSE",         cls: "text-red-600"   };
 }
 
 function ResultsScreen({ data, onRestart }: { data: ResultsData; onRestart: () => void }) {
@@ -721,22 +730,22 @@ function ResultsScreen({ data, onRestart }: { data: ResultsData; onRestart: () =
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-background px-4 py-12">
       <div className="w-full max-w-lg flex flex-col gap-6">
         <div className="text-center">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2 font-medium">Simulation ended · {formatTime(elapsedTime)}</p>
-          <p className={`text-5xl font-black tracking-tight mb-1 ${outcome.cls}`}>{outcome.label}</p>
-          <p className="text-4xl font-mono font-bold text-foreground tabular-nums">{finalScore >= 0 ? "+" : ""}{finalScore}</p>
+          <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground mb-3 font-military">// Simulation ended · {formatTime(elapsedTime)}</p>
+          <p className={`font-military text-5xl tracking-widest mb-2 uppercase ${outcome.cls}`}>{outcome.label}</p>
+          <p className="text-5xl font-mono font-bold text-foreground tabular-nums">{finalScore >= 0 ? "+" : ""}{finalScore}</p>
           <p className="text-xs text-muted-foreground mt-1 font-mono">raw {rawScore >= 0 ? "+" : ""}{rawScore} → normalized −20…+20</p>
         </div>
 
-        <div className="rounded-xl border border-zinc-700 bg-card overflow-hidden">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground px-4 pt-3 pb-2 font-medium border-b border-zinc-800">Score Breakdown</p>
-          <div className="divide-y divide-zinc-800">
+        <div className="border border-stone-800 bg-card overflow-hidden">
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground px-4 pt-3 pb-2 font-military border-b border-stone-900">// Score Breakdown</p>
+          <div className="divide-y divide-stone-900">
             {rows.map((r) => (
               <div key={r.label} className="flex items-center justify-between px-4 py-2.5">
                 <div>
                   <span className="text-sm text-foreground">{r.label}</span>
                   <span className="text-xs text-muted-foreground ml-2">{r.detail}</span>
                 </div>
-                <span className={`font-mono font-semibold tabular-nums text-sm ${r.pts > 0 ? "text-green-400" : r.pts < 0 ? "text-red-400" : "text-zinc-500"}`}>
+                <span className={`font-mono font-semibold tabular-nums text-sm ${r.pts > 0 ? "text-green-600" : r.pts < 0 ? "text-red-600" : "text-zinc-600"}`}>
                   {r.pts >= 0 ? "+" : ""}{r.pts}
                 </span>
               </div>
@@ -744,20 +753,20 @@ function ResultsScreen({ data, onRestart }: { data: ResultsData; onRestart: () =
           </div>
         </div>
 
-        <div className="rounded-xl border border-zinc-700 bg-card overflow-hidden">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground px-4 pt-3 pb-2 font-medium border-b border-zinc-800">Survivor Status</p>
-          <div className="divide-y divide-zinc-800">
+        <div className="border border-stone-800 bg-card overflow-hidden">
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground px-4 pt-3 pb-2 font-military border-b border-stone-900">// Survivor Status</p>
+          <div className="divide-y divide-stone-900">
             {survivors.map((s) => {
-              const tag = s.zombie ? { label: "Zombie", cls: "text-red-400"   }
-                        : s.dead   ? { label: "Dead",   cls: "text-zinc-500" }
-                        : { label: `Alive · ${s.satiety} satiety`, cls: "text-green-400" };
+              const tag = s.zombie ? { label: "💀 Zombie", cls: "text-red-500"  }
+                        : s.dead   ? { label: "✕ Dead",   cls: "text-zinc-600" }
+                        : { label: `▶ Alive · ${s.satiety}`, cls: "text-green-600" };
               const diet = !s.dead && !s.zombie
                 ? [s.fedBasic && "Basic", s.fedProtein && "Protein", s.fedExpired && "Expired"].filter(Boolean).join(", ") || "—"
                 : "—";
               return (
                 <div key={s.id} className="flex items-center justify-between px-4 py-2.5 gap-4">
                   <div className="min-w-0">
-                    <span className="text-sm font-medium text-foreground">{s.name}</span>
+                    <span className="text-sm font-medium text-foreground font-military">{s.name}</span>
                     <span className="text-xs text-muted-foreground ml-2">ate: {diet}</span>
                   </div>
                   <span className={`text-xs font-semibold shrink-0 ${tag.cls}`}>{tag.label}</span>
@@ -769,9 +778,9 @@ function ResultsScreen({ data, onRestart }: { data: ResultsData; onRestart: () =
 
         <button
           onClick={onRestart}
-          className="w-full py-3 rounded-xl border border-zinc-600 bg-zinc-800/50 text-zinc-300 font-semibold hover:bg-zinc-800 cursor-pointer transition-all"
+          className="w-full py-3 border border-stone-700 bg-stone-900/40 text-stone-300 font-military uppercase tracking-widest hover:bg-stone-800 cursor-pointer transition-all"
         >
-          Play Again
+          ↺ Play Again
         </button>
       </div>
     </div>
@@ -780,11 +789,14 @@ function ResultsScreen({ data, onRestart }: { data: ResultsData; onRestart: () =
 
 function ChoiceModal({ choice }: { choice: PendingChoice }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-      <div className="w-full max-w-sm mx-4 rounded-2xl border border-zinc-600 bg-card p-6 shadow-2xl flex flex-col gap-5">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm">
+      <div
+        className="w-full max-w-sm mx-4 border border-red-900/80 bg-card p-6 shadow-2xl flex flex-col gap-5"
+        style={{ boxShadow: "0 0 50px rgba(130,0,0,0.3)" }}
+      >
         <div className="flex flex-col gap-1.5">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">Decision required</p>
-          <p className="text-2xl font-bold text-foreground leading-tight">{choice.prompt}</p>
+          <p className="text-[10px] uppercase tracking-widest text-red-700 font-military">⚠ Decision required</p>
+          <p className="font-military text-2xl text-foreground leading-tight uppercase tracking-wide">{choice.prompt}</p>
           {choice.detail && (
             <p className="text-sm text-muted-foreground leading-snug">{choice.detail}</p>
           )}
@@ -792,18 +804,18 @@ function ChoiceModal({ choice }: { choice: PendingChoice }) {
         <div className="flex flex-col gap-2">
           <button
             onClick={choice.onYes}
-            className="w-full rounded-xl border border-green-700 bg-green-950/50 text-green-300 font-semibold py-3 px-4 text-sm hover:bg-green-950/80 cursor-pointer transition-all"
+            className="w-full border border-green-900 bg-green-950/40 text-green-500 font-semibold py-3 px-4 text-sm hover:bg-green-950/70 cursor-pointer transition-all uppercase tracking-wide"
           >
             {choice.yesLabel}
           </button>
           <button
             onClick={choice.onNo}
-            className="w-full rounded-xl border border-zinc-600 bg-zinc-800/50 text-zinc-400 font-semibold py-3 px-4 text-sm hover:bg-zinc-800 cursor-pointer transition-all"
+            className="w-full border border-stone-700 bg-stone-900/40 text-stone-400 font-semibold py-3 px-4 text-sm hover:bg-stone-800/60 cursor-pointer transition-all uppercase tracking-wide"
           >
             {choice.noLabel}
           </button>
         </div>
-        <p className="text-center text-xs text-muted-foreground">⏸ Timer paused</p>
+        <p className="text-center text-[10px] text-muted-foreground font-military tracking-widest uppercase">// Timer Paused //</p>
       </div>
     </div>
   );
@@ -819,12 +831,12 @@ function RulesCard() {
   ];
 
   return (
-    <div className="rounded-xl border border-zinc-700/60 p-4 bg-zinc-900/40 flex flex-col gap-3">
-      <p className="font-bold text-xs uppercase tracking-widest text-muted-foreground">Rules</p>
+    <div className="border border-stone-800 p-4 bg-card flex flex-col gap-3">
+      <p className="font-military text-[10px] uppercase tracking-widest text-muted-foreground">// Field Protocols</p>
       <ul className="flex flex-col gap-2">
         {rules.map((r) => (
-          <li key={r.text} className="flex items-start gap-2 text-xs text-zinc-400 leading-snug">
-            <span className="shrink-0 mt-[5px] w-1 h-1 rounded-full bg-zinc-600" />
+          <li key={r.text} className="flex items-start gap-2 text-xs text-stone-500 leading-snug">
+            <span className="shrink-0 text-red-800 font-bold">▸</span>
             {r.text}
           </li>
         ))}
@@ -836,28 +848,35 @@ function RulesCard() {
 function IntroScreen({ onStart }: { onStart: () => void }) {
   const rules = [
     "Allocate food to keep survivors alive",
-    "Satiety decreases over time",
-    "Critical survivors can become Infected",
-    "Infected survivors can turn into Zombies",
-    "Expired food causes Sick (reduces food effectiveness)",
-    "Events will impact resources and survivors",
+    "Satiety decreases over time — feed before it hits zero",
+    "Critical survivors become Infected after 30s",
+    "Infected survivors turn Zombie after 45s",
+    "Expired food causes Sick — food only half effective",
+    "Events will strike resources and survivors",
     "Keep your team alive until extraction arrives",
   ];
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-background px-4 py-12">
       <div className="w-full max-w-lg flex flex-col items-center gap-8">
+
         <div className="text-center">
-          <h1 className="text-6xl font-bold tracking-tight text-accent mb-3">RATION RUSH</h1>
-          <p className="text-base text-muted-foreground">A survival resource management simulation</p>
+          <p className="text-[10px] font-military tracking-[0.4em] text-red-900 uppercase mb-4">☢ CLASSIFIED OPERATION ☢</p>
+          <h1
+            className="font-military text-7xl tracking-widest text-red-700 uppercase leading-none mb-3"
+            style={{ textShadow: "0 0 40px rgba(160,0,0,0.45), 2px 2px 0 rgba(0,0,0,0.9)" }}
+          >
+            RATION<br />RUSH
+          </h1>
+          <p className="text-xs text-muted-foreground tracking-widest uppercase font-military">Survive · Feed · Decide</p>
         </div>
 
-        <div className="w-full rounded-xl border border-zinc-700 bg-card px-6 py-5">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-4">Game Rules</p>
-          <ul className="flex flex-col gap-2.5 list-none">
+        <div className="w-full border border-stone-800 bg-card px-6 py-5">
+          <p className="text-[10px] uppercase tracking-widest text-red-800 font-military mb-4">// Operational Briefing</p>
+          <ul className="flex flex-col gap-3 list-none">
             {rules.map((rule) => (
-              <li key={rule} className="flex items-start gap-3 text-sm text-foreground/90">
-                <span className="shrink-0 mt-[6px] w-1.5 h-1.5 rounded-full bg-accent/70" />
+              <li key={rule} className="flex items-start gap-3 text-sm text-foreground/80">
+                <span className="shrink-0 text-red-800 font-bold mt-0.5">▸</span>
                 {rule}
               </li>
             ))}
@@ -866,9 +885,10 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
 
         <button
           onClick={onStart}
-          className="px-8 py-4 text-xl font-semibold rounded-lg bg-primary text-primary-foreground cursor-pointer transition-opacity hover:opacity-90"
+          className="px-10 py-4 text-lg font-military uppercase tracking-[0.2em] bg-red-900 text-red-100 border border-red-700 cursor-pointer transition-all hover:bg-red-800 hover:border-red-600"
+          style={{ textShadow: "0 0 12px rgba(255,120,120,0.25)" }}
         >
-          BEGIN SIMULATION
+          ▶ Begin Simulation
         </button>
       </div>
     </div>
@@ -1066,16 +1086,19 @@ function GameScreen() {
       {pendingChoice && <ChoiceModal choice={pendingChoice} />}
       <div className="w-full max-w-3xl px-4 pt-8">
         <div className="text-center mb-6">
-          <p className="text-sm font-medium text-muted-foreground uppercase tracking-widest mb-2">Time Remaining</p>
-          <p className={`text-7xl font-mono font-bold tabular-nums ${
-            remainingTime <= 60 ? "text-destructive" : remainingTime <= 300 ? "text-accent" : "text-foreground"
+          <p className="text-[10px] font-military uppercase tracking-[0.35em] text-muted-foreground mb-2">⏱ Time Remaining</p>
+          <p className={`font-military text-7xl tabular-nums tracking-widest ${
+            remainingTime <= 60  ? "text-red-600 timer-danger"
+            : remainingTime <= 180 ? "text-red-700"
+            : remainingTime <= 300 ? "text-red-900"
+            : "text-foreground"
           }`}>
             {formatTime(remainingTime)}
           </p>
           {started && nextAny && (
-            <p className="text-xs text-muted-foreground mt-2">
-              Next {nextAny.isChoice ? <span className="text-amber-400 font-semibold">decision</span> : "event"} in{" "}
-              <span className="text-foreground font-mono font-semibold tabular-nums">
+            <p className="text-xs text-muted-foreground mt-2 font-military uppercase tracking-widest">
+              Next {nextAny.isChoice ? <span className="text-red-600 font-semibold">decision</span> : "event"} in{" "}
+              <span className="font-mono font-semibold tabular-nums text-foreground">
                 {nextAny.time - elapsedTime}s
               </span>
             </p>
@@ -1086,20 +1109,20 @@ function GameScreen() {
           <div className="flex justify-center mb-6">
             <button
               onClick={startTimer}
-              className="px-6 py-3 text-lg font-semibold rounded-lg bg-primary text-primary-foreground cursor-pointer transition-opacity hover:opacity-90"
+              className="px-8 py-3 text-base font-military uppercase tracking-[0.2em] bg-red-900 text-red-100 border border-red-700 cursor-pointer transition-all hover:bg-red-800"
             >
-              Start Timer
+              ▶ Start
             </button>
           </div>
         )}
 
         {started && (
-          <p className="text-center text-sm text-muted-foreground mb-6">
-            {remainingTime === 0 ? "Simulation ended." : "Game Running"}
+          <p className="text-center text-xs text-muted-foreground mb-6 font-military tracking-widest uppercase">
+            {remainingTime === 0 ? "// Simulation ended //" : "// Active //"}
             {" · "}
-            <span className="text-foreground font-medium">{aliveCount}</span> alive
-            {deadCount > 0 && <> · <span className="text-zinc-400 font-medium">{deadCount} dead</span></>}
-            {zombieCount > 0 && <> · <span className="text-red-400 font-medium">{zombieCount} zombie{zombieCount > 1 ? "s" : ""}</span></>}
+            <span className="text-green-700 font-medium">{aliveCount} alive</span>
+            {deadCount > 0 && <> · <span className="text-stone-500 font-medium">{deadCount} dead</span></>}
+            {zombieCount > 0 && <> · <span className="text-red-700 font-medium">{zombieCount} zombie{zombieCount > 1 ? "s" : ""}</span></>}
           </p>
         )}
 
