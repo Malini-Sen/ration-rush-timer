@@ -64,6 +64,7 @@ interface ChoiceEventDef {
   detail?: string;
   yesLabel: string;
   noLabel: string;
+  yesRequiresBasic?: number;
   applyYes: (
     setInventory: (fn: (p: Record<FoodType, FoodItem>) => Record<FoodType, FoodItem>) => void,
     setScore: (fn: (p: number) => number) => void
@@ -81,6 +82,7 @@ interface PendingChoice {
   noLabel: string;
   onYes: () => void;
   onNo: () => void;
+  yesRequiresBasic?: number;
 }
 
 const CHOICE_EVENTS: ChoiceEventDef[] = [
@@ -90,6 +92,7 @@ const CHOICE_EVENTS: ChoiceEventDef[] = [
     detail: "Share 2 Basic rations with a wanderer in need.",
     yesLabel: "Yes — share the food (−2 Basic, +8 score)",
     noLabel: "No — protect our supplies (−6 score)",
+    yesRequiresBasic: 2,
     applyYes: (_setInventory, setScore) => {
       _setInventory((prev) => ({
         ...prev,
@@ -214,11 +217,10 @@ const GAME_EVENTS: GameEvent[] = [
   },
   {
     time: 390,
-    message: "Relief convoy — +2 Basic, +1 Protein rations.",
+    message: "Relief convoy — +1 Protein ration.",
     logType: "good",
     applyInventory: (inv) => ({
       ...inv,
-      basic:   { ...inv.basic,   count: inv.basic.count + 2   },
       protein: { ...inv.protein, count: inv.protein.count + 1 },
     }),
   },
@@ -242,12 +244,10 @@ const GAME_EVENTS: GameEvent[] = [
   },
   {
     time: 480,
-    message: "Scavengers return — +1 Basic, +1 Protein, +1 Expired.",
+    message: "Scavengers return — +1 Expired ration.",
     logType: "good",
     applyInventory: (inv) => ({
       ...inv,
-      basic:   { ...inv.basic,   count: inv.basic.count + 1   },
-      protein: { ...inv.protein, count: inv.protein.count + 1 },
       expired: { ...inv.expired, count: inv.expired.count + 1 },
     }),
   },
@@ -671,7 +671,7 @@ function getOutcomeLabel(finalScore: number): { label: string; cls: string } {
   return                       { label: "COLLAPSE",         cls: "text-red-600"   };
 }
 
-function ResultsScreen({ data, onRestart }: { data: ResultsData; onRestart: () => void }) {
+function ResultsScreen({ data }: { data: ResultsData }) {
   const { survivors, elapsedTime, proteinUsed, decisionScore } = data;
 
   const alive   = survivors.filter((s) => !s.dead && !s.zombie);
@@ -776,18 +776,14 @@ function ResultsScreen({ data, onRestart }: { data: ResultsData; onRestart: () =
           </div>
         </div>
 
-        <button
-          onClick={onRestart}
-          className="w-full py-3 border border-stone-700 bg-stone-900/40 text-stone-300 font-military uppercase tracking-widest hover:bg-stone-800 cursor-pointer transition-all"
-        >
-          ↺ Play Again
-        </button>
       </div>
     </div>
   );
 }
 
-function ChoiceModal({ choice }: { choice: PendingChoice }) {
+function ChoiceModal({ choice, inventory }: { choice: PendingChoice; inventory: Record<FoodType, FoodItem> }) {
+  const yesDisabled = (choice.yesRequiresBasic ?? 0) > 0 && inventory.basic.count < (choice.yesRequiresBasic ?? 0);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm">
       <div
@@ -803,10 +799,16 @@ function ChoiceModal({ choice }: { choice: PendingChoice }) {
         </div>
         <div className="flex flex-col gap-2">
           <button
-            onClick={choice.onYes}
-            className="w-full border border-green-900 bg-green-950/40 text-green-500 font-semibold py-3 px-4 text-sm hover:bg-green-950/70 cursor-pointer transition-all uppercase tracking-wide"
+            disabled={yesDisabled}
+            onClick={!yesDisabled ? choice.onYes : undefined}
+            className={`w-full border font-semibold py-3 px-4 text-sm transition-all uppercase tracking-wide ${
+              yesDisabled
+                ? "border-zinc-800 bg-zinc-900/20 text-zinc-600 opacity-40 cursor-not-allowed"
+                : "border-green-900 bg-green-950/40 text-green-500 hover:bg-green-950/70 cursor-pointer"
+            }`}
           >
             {choice.yesLabel}
+            {yesDisabled && <span className="ml-2 normal-case font-normal text-xs opacity-70">— not enough Basic</span>}
           </button>
           <button
             onClick={choice.onNo}
@@ -828,6 +830,8 @@ function RulesCard() {
     { text: `Infected (${INFECTED_TO_ZOMBIE}s) → Zombie` },
     { text: `Starvation (${STARVATION_TO_DEAD}s) → Dead` },
     { text: "Expired food → Sick (half effect)" },
+    { text: "Medic Treat cures Infected or Sick — 1× use only" },
+    { text: "Isolate only delays zombie turn — does not cure" },
   ];
 
   return (
@@ -850,8 +854,9 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
     "Allocate food to keep survivors alive",
     "Satiety decreases over time — feed before it hits zero",
     "Critical survivors become Infected after 30s",
-    "Infected survivors turn Zombie after 45s",
-    "Expired food causes Sick — food only half effective",
+    "Infected survivors turn Zombie after 45s — Isolate to delay, but it does not cure",
+    "Medic Treat cures Infection or Sickness — 1× use only for the entire run",
+    "Expired food causes Sick — food only half effective while sick",
     "Events will strike resources and survivors",
     "Keep your team alive until extraction arrives",
   ];
@@ -968,6 +973,7 @@ function GameScreen() {
         detail: choice.detail,
         yesLabel: choice.yesLabel,
         noLabel: choice.noLabel,
+        yesRequiresBasic: choice.yesRequiresBasic,
         onYes: () => {
           choice.applyYes(setInventory, setScore);
           setPendingChoice(null);
@@ -1069,7 +1075,6 @@ function GameScreen() {
     return (
       <ResultsScreen
         data={{ survivors, elapsedTime, proteinUsed, decisionScore: score }}
-        onRestart={() => window.location.reload()}
       />
     );
   }
@@ -1083,7 +1088,7 @@ function GameScreen() {
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center bg-background pb-12">
-      {pendingChoice && <ChoiceModal choice={pendingChoice} />}
+      {pendingChoice && <ChoiceModal choice={pendingChoice} inventory={inventory} />}
       <div className="w-full max-w-3xl px-4 pt-8">
         <div className="text-center mb-6">
           <p className="text-[10px] font-military uppercase tracking-[0.35em] text-muted-foreground mb-2">⏱ Time Remaining</p>
