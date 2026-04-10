@@ -68,6 +68,10 @@ interface ChoiceEventDef {
     setInventory: (fn: (p: Record<FoodType, FoodItem>) => Record<FoodType, FoodItem>) => void,
     setScore: (fn: (p: number) => number) => void
   ) => void;
+  applyNo?: (
+    setInventory: (fn: (p: Record<FoodType, FoodItem>) => Record<FoodType, FoodItem>) => void,
+    setScore: (fn: (p: number) => number) => void
+  ) => void;
 }
 
 interface PendingChoice {
@@ -85,13 +89,16 @@ const CHOICE_EVENTS: ChoiceEventDef[] = [
     prompt: "Feed an outsider?",
     detail: "Share 2 Basic rations with a wanderer in need.",
     yesLabel: "Yes — share the food (−2 Basic, +8 score)",
-    noLabel: "No — protect our supplies",
-    applyYes: (setInventory, setScore) => {
-      setInventory((prev) => ({
+    noLabel: "No — protect our supplies (−6 score)",
+    applyYes: (_setInventory, setScore) => {
+      _setInventory((prev) => ({
         ...prev,
         basic: { ...prev.basic, count: Math.max(0, prev.basic.count - 2) },
       }));
       setScore((n) => n + 8);
+    },
+    applyNo: (_setInventory, setScore) => {
+      setScore((n) => n - 6);
     },
   },
   {
@@ -99,13 +106,16 @@ const CHOICE_EVENTS: ChoiceEventDef[] = [
     prompt: "Steal from another group?",
     detail: "Take 3 Basic rations from a vulnerable group nearby.",
     yesLabel: "Yes — take the supplies (+3 Basic, −5 score)",
-    noLabel: "No — leave them alone",
-    applyYes: (setInventory, setScore) => {
-      setInventory((prev) => ({
+    noLabel: "No — leave them alone (+3 score)",
+    applyYes: (_setInventory, setScore) => {
+      _setInventory((prev) => ({
         ...prev,
         basic: { ...prev.basic, count: prev.basic.count + 3 },
       }));
       setScore((n) => n - 5);
+    },
+    applyNo: (_setInventory, setScore) => {
+      setScore((n) => n + 3);
     },
   },
 ];
@@ -944,6 +954,7 @@ function GameScreen() {
           setPaused(false);
         },
         onNo: () => {
+          if (choice.applyNo) choice.applyNo(setInventory, setScore);
           setPendingChoice(null);
           setPaused(false);
         },
