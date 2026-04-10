@@ -800,10 +800,10 @@ function ResultsScreen({ data }: { data: ResultsData }) {
     survivalDetail = `Collapsed at ${formatTime(elapsedTime)}`;
   }
 
-  const rawScore = basePts + satietyPts + infectionPts + sickPts + resourcePts + decisionScore + survivalBonus;
+  const rawScore = basePts + satietyPts + infectionPts + sickPts + resourcePts + survivalBonus;
 
-  // Score is 0+ (clamp negatives to 0)
-  const finalScore = Math.max(0, rawScore);
+  // Clamp base score to 0, then apply decision bonus/penalty, then clamp again
+  const finalScore = Math.max(0, Math.max(0, rawScore) + decisionScore);
 
   const outcome = getOutcomeLabel(finalScore);
 
