@@ -95,13 +95,13 @@ const CHOICE_EVENTS: ChoiceEventDef[] = [
   {
     time: 150,
     prompt: "Ration strictly to conserve supplies?",
-    detail: "Tighten rations now — all survivors lose 10 satiety, but gain +5 Basic food.",
-    yesLabel: "Yes — ration strictly (−10 satiety all, +5 Basic)",
+    detail: "Tighten rations now — all survivors lose 10 satiety, but gain +4 Basic food.",
+    yesLabel: "Yes — ration strictly (−10 satiety all, +4 Basic)",
     noLabel: "No — keep current rations",
     applyYes: (_setInventory, _setScore, setSurvivors) => {
       _setInventory((prev) => ({
         ...prev,
-        basic: { ...prev.basic, count: prev.basic.count + 5 },
+        basic: { ...prev.basic, count: prev.basic.count + 4 },
       }));
       setSurvivors?.((prev) =>
         prev.map((s) => (s.dead || s.zombie ? s : { ...s, satiety: Math.max(0, s.satiety - 10) }))
@@ -188,6 +188,17 @@ const GAME_EVENTS: GameEvent[] = [
       ),
   },
   {
+    time: 180,
+    message: "Elder weakens from the cold — loses 10 satiety.",
+    logType: "danger",
+    applySurvivors: (ss) =>
+      ss.map((s) =>
+        s.id === "elderly" && !s.dead && !s.zombie
+          ? { ...s, satiety: Math.max(0, s.satiety - 10) }
+          : s
+      ),
+  },
+  {
     time: 210,
     message: "Rations raided — 3 Basic rations stolen.",
     logType: "danger",
@@ -228,12 +239,12 @@ const GAME_EVENTS: GameEvent[] = [
   },
   {
     time: 330,
-    message: "Pathogen wave — all Weak survivors immediately Infected.",
+    message: "Pathogen wave — all survivors below 40 satiety immediately Infected.",
     logType: "danger",
     applySurvivors: (ss) =>
       ss.map((s) => {
         if (s.dead || s.zombie || s.infected) return s;
-        if (getSatietyStatus(s.satiety) !== "Weak") return s;
+        if (s.satiety >= 40) return s;
         return { ...s, infected: true, criticalDuration: 0, infectionDuration: 0 };
       }),
   },
@@ -778,7 +789,7 @@ function ResultsScreen({ data }: { data: ResultsData }) {
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-background px-4 py-12">
       <div className="w-full max-w-lg flex flex-col gap-6">
         <div className="text-center">
-          <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground mb-3 font-military">// Simulation ended · {formatTime(elapsedTime)}</p>
+          <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground mb-3 font-military">// {formatTime(elapsedTime)}</p>
           <p className={`font-military text-5xl tracking-widest mb-2 uppercase ${outcome.cls}`}>{outcome.label}</p>
           <p className="text-5xl font-mono font-bold text-foreground tabular-nums">{finalScore >= 0 ? "+" : ""}{finalScore}</p>
           <p className="text-xs text-muted-foreground mt-1 font-mono">raw {rawScore >= 0 ? "+" : ""}{rawScore} → normalized −20…+20</p>
@@ -1158,7 +1169,7 @@ function GameScreen() {
       {pendingChoice && <ChoiceModal choice={pendingChoice} inventory={inventory} />}
       <div className="w-full max-w-3xl px-4 pt-8">
         <div className="text-center mb-6">
-          <p className="text-[10px] font-military uppercase tracking-[0.35em] text-muted-foreground mb-2">⏱ Time Remaining</p>
+          <p className="text-[10px] font-military uppercase tracking-[0.35em] text-muted-foreground mb-2">Time Remaining</p>
           <p className={`font-military text-7xl tabular-nums tracking-widest ${
             remainingTime <= 60  ? "text-red-600 timer-danger"
             : remainingTime <= 180 ? "text-red-700"
@@ -1190,7 +1201,7 @@ function GameScreen() {
 
         {started && (
           <p className="text-center text-xs text-muted-foreground mb-6 font-military tracking-widest uppercase">
-            {remainingTime === 0 ? "// Simulation ended //" : "// Active //"}
+            {"// Active //"}
             {" · "}
             <span className="text-green-700 font-medium">{aliveCount} alive</span>
             {deadCount > 0 && <> · <span className="text-stone-500 font-medium">{deadCount} dead</span></>}
