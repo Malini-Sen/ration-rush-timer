@@ -797,11 +797,11 @@ function ResultsScreen({ data }: { data: ResultsData }) {
     survivalDetail = `Collapsed at ${formatTime(elapsedTime)}`;
   }
 
-  // Base score: survivors + satiety only — clamped to 0
-  const rawScore = basePts + satietyPts;
+  // Base score: survivors + satiety + infection cures + sickness — clamped to 0
+  const rawScore = basePts + satietyPts + infectionPts + sickPts;
 
-  // Post-normalization: recovery, sickness, decisions, survival bonus — all applied after clamp, then clamp again
-  const finalScore = Math.max(0, Math.max(0, rawScore) + infectionPts + sickPts + decisionScore + survivalBonus);
+  // Post-normalization: decisions and survival bonus only — applied after clamp, then clamp again
+  const finalScore = Math.max(0, Math.max(0, rawScore) + decisionScore + survivalBonus);
 
   const outcome = getOutcomeLabel(finalScore);
 
